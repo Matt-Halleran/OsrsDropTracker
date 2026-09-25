@@ -1,6 +1,5 @@
 package com.droptracker.PlayerDropClient;
 
-import java.time.Instant;
 import java.util.UUID;
 
 public class DropHttpMessage
@@ -26,7 +25,7 @@ public class DropHttpMessage
 
     public int GpValue = -1;
 
-    public boolean IsCollectionLog = false;
+    public boolean CollectionLogCompleted = false;
 
     public boolean IsImportant = false;
 }

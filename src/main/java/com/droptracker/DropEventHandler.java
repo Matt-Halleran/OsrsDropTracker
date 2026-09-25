@@ -8,11 +8,13 @@ import net.runelite.client.game.ItemManager;
 import net.runelite.client.game.ItemStack;
 import net.runelite.client.plugins.loottracker.LootReceived;
 import okhttp3.OkHttpClient;
+import lombok.extern.slf4j.Slf4j;
 
 import java.time.Instant;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 
+@Slf4j
 public class DropEventHandler
 {
     private final ItemManager _itemManager;
@@ -62,12 +64,15 @@ public class DropEventHandler
             dropMessage.KillCount = -1;
             dropMessage.TimeStamp = timeStamp;
 
-            if (dropMessage.GpValue > VALUABLE_DROP_THRESHOLD || dropMessage.IsCollectionLog)
+            if (dropMessage.GpValue > VALUABLE_DROP_THRESHOLD || dropMessage.CollectionLogCompleted)
             {
                 dropMessage.IsImportant = true;
             }
 
-            _messageQueue.offer(dropMessage);
+            if (!_messageQueue.offer(dropMessage))
+            {
+                log.debug("Message queue full ({}), dropping oldest unflushed drop", QUEUE_SIZE);
+            }
 
             //if IsImportant call flush queue
         }
@@ -92,12 +97,15 @@ public class DropEventHandler
             dropMessage.KillCount = -1;
             dropMessage.TimeStamp = timeStamp;
 
-            if (dropMessage.GpValue > VALUABLE_DROP_THRESHOLD || dropMessage.IsCollectionLog)
+            if (dropMessage.GpValue > VALUABLE_DROP_THRESHOLD || dropMessage.CollectionLogCompleted)
             {
                 dropMessage.IsImportant = true;
             }
 
-            _messageQueue.offer(dropMessage);
+            if (!_messageQueue.offer(dropMessage))
+            {
+                log.debug("Message queue full ({}), dropping oldest unflushed drop", QUEUE_SIZE);
+            }
 
             //if IsImportant call flush queue
         }
@@ -120,12 +128,15 @@ public class DropEventHandler
             dropMessage.Source = npcComp.getName();
             dropMessage.KillCount = -1;
 
-            if (dropMessage.GpValue > VALUABLE_DROP_THRESHOLD || dropMessage.IsCollectionLog)
+            if (dropMessage.GpValue > VALUABLE_DROP_THRESHOLD || dropMessage.CollectionLogCompleted)
             {
                 dropMessage.IsImportant = true;
             }
 
-            _messageQueue.offer(dropMessage);
+            if (!_messageQueue.offer(dropMessage))
+            {
+                log.debug("Message queue full ({}), dropping oldest unflushed drop", QUEUE_SIZE);
+            }
 
             //if IsImportant call flush queue
         }
@@ -147,12 +158,15 @@ public class DropEventHandler
             dropMessage.Source = lootReceived.getName();
             dropMessage.KillCount = -1;
 
-            if (dropMessage.GpValue > VALUABLE_DROP_THRESHOLD || dropMessage.IsCollectionLog)
+            if (dropMessage.GpValue > VALUABLE_DROP_THRESHOLD || dropMessage.CollectionLogCompleted)
             {
                 dropMessage.IsImportant = true;
             }
 
-            _messageQueue.offer(dropMessage);
+            if (!_messageQueue.offer(dropMessage))
+            {
+                log.debug("Message queue full ({}), dropping oldest unflushed drop", QUEUE_SIZE);
+            }
 
             //if IsImportant call flush queue
         }
