@@ -243,7 +243,12 @@ public class DropEventHandler
             public void onFailure(Call call, IOException e)
             {
                 log.debug("Drop batch upload failed, requeueing {} drops", dropBatch.size());
-                dropBatch.forEach((uuid, msg) -> messageQueue.offer(msg));
+                dropBatch.forEach((uuid, msg) -> {
+                    if (!messageQueue.offer(msg))
+                    {
+                        log.debug("Message queue full ({}), dropping requeued drop {}", QUEUE_SIZE, uuid);
+                    }
+                });
             }
 
             @Override
@@ -255,7 +260,13 @@ public class DropEventHandler
                     {
                         log.debug("Drop batch upload returned {}, requeueing {} drops",
                                 response.code(), dropBatch.size());
-                        dropBatch.forEach((uuid, msg) -> messageQueue.offer(msg));
+
+                        dropBatch.forEach((uuid, msg) -> {
+                            if (!messageQueue.offer(msg))
+                            {
+                                log.debug("Message queue full ({}), dropping requeued drop {}", QUEUE_SIZE, uuid);
+                            }
+                        });
                         return;
                     }
 
@@ -269,7 +280,10 @@ public class DropEventHandler
                             DropHttpMessage msg = dropBatch.remove(uuid);
                             if (msg != null)
                             {
-                                messageQueue.offer(msg);
+                                if (!messageQueue.offer(msg))
+                                {
+                                    log.debug("Message queue full ({}), dropping requeued drop {}", QUEUE_SIZE, uuid);
+                                }
                             }
                         }
                     }
