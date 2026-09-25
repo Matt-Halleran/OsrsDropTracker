@@ -73,14 +73,13 @@ public class DropEventHandler
 
                 if (dropBatch.isEmpty()) { return; }
 
-                SendDropBatch(dropBatch, accountHash);
+                SendDropBatch(dropBatch, accountHash, messageQueue);
             }
         }
         catch (Exception ex)
         {
             log.warn("Drop flush failed", ex);
         }
-
     }
 
     public void HandleEventDrop(LootReceived lootReceived)
@@ -225,11 +224,9 @@ public class DropEventHandler
                 h -> new LinkedBlockingQueue<>(QUEUE_SIZE));
     }
 
-    private void SendDropBatch(ConcurrentHashMap<String, DropHttpMessage> dropBatch, long accountHash) {
-        var messageQueue = GetQueueFor(accountHash);
-
+    private void SendDropBatch(ConcurrentHashMap<String, DropHttpMessage> dropBatch, long accountHash, LinkedBlockingQueue<DropHttpMessage> messageQueue) {
         var apiRequest = new AddPlayerDropsRequestMessage();
-        apiRequest.PlayerHash = String.valueOf(accountHash);
+        apiRequest.PlayerHash = accountHash;
         apiRequest.Drops = dropBatch.values();
 
         String json = _gson.toJson(apiRequest);
