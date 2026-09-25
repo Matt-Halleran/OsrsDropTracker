@@ -8,6 +8,7 @@ import net.runelite.api.ItemComposition;
 import net.runelite.api.Player;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
+import net.runelite.client.events.ServerNpcLoot;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.game.ItemStack;
 import net.runelite.client.plugins.Plugin;
@@ -18,6 +19,7 @@ import okhttp3.OkHttpClient;
 
 import javax.inject.Inject;
 import java.util.Collection;
+import java.util.regex.Pattern;
 
 @Slf4j
 @PluginDescriptor(
@@ -39,6 +41,10 @@ public class DropTrackerPlugin extends Plugin
 	@Inject
 	private OkHttpClient okHttpClient;
 
+	private static final Pattern PICKPOCKET_REGEX = Pattern.compile("You pick (the )?(?<target>.+)'s? pocket.*");
+
+	private int pickpocketTick = -1;
+
 	public DropTrackerPlugin()
 	{
 		_dropEventHandler = new DropEventHandler(itemManager, okHttpClient, client);
@@ -57,18 +63,30 @@ public class DropTrackerPlugin extends Plugin
 	}
 
 	@Subscribe
+	public void onServerNpcLoot(ServerNpcLoot serverNpcLoot)
+	{
+		boolean isPickpocket = pickpocketTick == client.getTickCount();
+
+		if (isPickpocket)
+		{
+			_dropEventHandler.HandlePickpocketDrop(serverNpcLoot);
+		}
+
+		_dropEventHandler.HandleNpcDrop(serverNpcLoot);
+	}
+
+	@Subscribe
 	public void onLootReceived(LootReceived lootReceived)
 	{
 		LootRecordType lootType = lootReceived.getType();
-		Player player = client.getLocalPlayer();
 
 		switch (lootType){
 			case EVENT:
-				_dropEventHandler.HandleEventDrop(lootReceived, player);
+				_dropEventHandler.HandleEventDrop(lootReceived);
 			break;
 
 			case UNKNOWN:
-				_dropEventHandler.HandleUnknownDrop(lootReceived, player);
+				_dropEventHandler.HandleUnknownDrop(lootReceived);
 			break;
 
             default:

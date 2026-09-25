@@ -5,6 +5,7 @@ import com.droptracker.PlayerDropClient.DropHttpMessage;
 import com.sun.jna.platform.win32.Guid;
 import net.runelite.api.Client;
 import net.runelite.api.Player;
+import net.runelite.client.events.ServerNpcLoot;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.game.ItemStack;
 import net.runelite.client.plugins.loottracker.LootReceived;
@@ -21,6 +22,7 @@ public class DropEventHandler
     private final ItemManager _itemManager;
     private final OsrsDataApiClient _playerDropHttpClient;
     private final Client _client;
+    private static int VALUABLE_DROP_THRESHOLD = 1000000;
 
     private ConcurrentHashMap<String, DropHttpMessage> _messageQueue;
 
@@ -29,10 +31,10 @@ public class DropEventHandler
         _itemManager = itemManager;
         _playerDropHttpClient = new OsrsDataApiClient(okHttpClient);
         _client = client;
-        _messageQueue = new ConcurrentHashMap<String, DropHttpMessage>(100);
+        _messageQueue = new ConcurrentHashMap<String, DropHttpMessage>(250);
     }
 
-    public void HandleEventDrop(LootReceived lootReceived, Player player)
+    public void HandleEventDrop(LootReceived lootReceived)
     {
         var items = lootReceived.getItems();
 
@@ -48,28 +50,34 @@ public class DropEventHandler
             dropMessage.Source = lootReceived.getName();
             dropMessage.KillCount = -1;
 
+            if (dropMessage.GpValue > VALUABLE_DROP_THRESHOLD || dropMessage.IsCollectionLog)
+            {
+                dropMessage.IsImportant = true;
+            }
+
             _messageQueue.put(dropMessage.DropUUID, dropMessage);
 
             //if IsImportant call flush queue
         }
     }
 
-    public void HandleNpcDrop(LootReceived lootReceived, Player player)
+    public void HandleNpcDrop(ServerNpcLoot lootReceived)
     {
 
     }
 
-    public void HandlePickpocketDrop(LootReceived lootReceived, Player player)
+    public void HandlePickpocketDrop(ServerNpcLoot lootReceived)
     {
 
     }
 
-    public void HandlePlayerDrop(LootReceived lootReceived, Player player)
+    //Questioning if player drops are worth logging?
+    public void HandlePlayerDrop(LootReceived lootReceived)
     {
 
     }
 
-    public void HandleUnknownDrop(LootReceived lootReceived, Player player)
+    public void HandleUnknownDrop(LootReceived lootReceived)
     {
 
     }
