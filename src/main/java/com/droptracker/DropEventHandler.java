@@ -10,8 +10,6 @@ import net.runelite.client.plugins.loottracker.LootReceived;
 import okhttp3.OkHttpClient;
 
 import java.time.Instant;
-import java.util.Collection;
-import java.util.LinkedList;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class DropEventHandler
@@ -19,7 +17,9 @@ public class DropEventHandler
     private final ItemManager _itemManager;
     private final OsrsDataApiClient _playerDropHttpClient;
     private final Client _client;
+
     private final static int VALUABLE_DROP_THRESHOLD = 1000000;
+    private final static int QUEUE_SIZE = 250;
 
     private ConcurrentHashMap<String, DropHttpMessage> _messageQueue;
 
@@ -28,7 +28,12 @@ public class DropEventHandler
         _itemManager = itemManager;
         _playerDropHttpClient = new OsrsDataApiClient(okHttpClient);
         _client = client;
-        _messageQueue = new ConcurrentHashMap<String, DropHttpMessage>(250);
+        _messageQueue = new ConcurrentHashMap<String, DropHttpMessage>(QUEUE_SIZE);
+    }
+
+    public void Flush()
+    {
+
     }
 
     public void HandleEventDrop(LootReceived lootReceived)

@@ -17,7 +17,10 @@ import net.runelite.http.api.loottracker.LootRecordType;
 import okhttp3.OkHttpClient;
 
 import javax.inject.Inject;
+import java.util.concurrent.*;
 import java.util.regex.Pattern;
+
+import static java.util.concurrent.TimeUnit.SECONDS;
 
 @Slf4j
 @PluginDescriptor(
@@ -43,6 +46,8 @@ public class DropTrackerPlugin extends Plugin
 
 	private int pickpocketTick = -1;
 
+	private ScheduledExecutorService _flushService;
+
 	public DropTrackerPlugin()
 	{
 	}
@@ -51,6 +56,9 @@ public class DropTrackerPlugin extends Plugin
 	protected void startUp() throws Exception
 	{
 		_dropEventHandler = new DropEventHandler(itemManager, okHttpClient, client);
+
+		_flushService = Executors.newSingleThreadScheduledExecutor();
+		_flushService.scheduleAtFixedRate(_dropEventHandler::Flush, 30, 30, TimeUnit.SECONDS);
 	}
 
 	@Override
