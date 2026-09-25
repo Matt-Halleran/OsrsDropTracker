@@ -63,23 +63,85 @@ public class DropEventHandler
 
     public void HandleNpcDrop(ServerNpcLoot lootReceived)
     {
+        var items = lootReceived.getItems();
+        var npcComp = lootReceived.getComposition();
 
+        for (ItemStack item : items)
+        {
+            var itemComp = _itemManager.getItemComposition(item.getId());
+
+            var dropMessage = new DropHttpMessage();
+            dropMessage.ItemId = item.getId();
+            dropMessage.ItemName = itemComp.getName();
+            dropMessage.Quantity = item.getQuantity();
+            dropMessage.GpValue = itemComp.getPrice();
+            dropMessage.Source = npcComp.getName();
+            dropMessage.KillCount = -1;
+
+            if (dropMessage.GpValue > VALUABLE_DROP_THRESHOLD || dropMessage.IsCollectionLog)
+            {
+                dropMessage.IsImportant = true;
+            }
+
+            _messageQueue.put(dropMessage.DropUUID, dropMessage);
+
+            //if IsImportant call flush queue
+        }
     }
 
     public void HandlePickpocketDrop(ServerNpcLoot lootReceived)
     {
+        var items = lootReceived.getItems();
+        var npcComp = lootReceived.getComposition();
 
-    }
+        for (ItemStack item : items)
+        {
+            var itemComp = _itemManager.getItemComposition(item.getId());
 
-    //Questioning if player drops are worth logging?
-    public void HandlePlayerDrop(LootReceived lootReceived)
-    {
+            var dropMessage = new DropHttpMessage();
+            dropMessage.ItemId = item.getId();
+            dropMessage.ItemName = itemComp.getName();
+            dropMessage.Quantity = item.getQuantity();
+            dropMessage.GpValue = itemComp.getPrice();
+            dropMessage.Source = npcComp.getName();
+            dropMessage.KillCount = -1;
 
+            if (dropMessage.GpValue > VALUABLE_DROP_THRESHOLD || dropMessage.IsCollectionLog)
+            {
+                dropMessage.IsImportant = true;
+            }
+
+            _messageQueue.put(dropMessage.DropUUID, dropMessage);
+
+            //if IsImportant call flush queue
+        }
     }
 
     public void HandleUnknownDrop(LootReceived lootReceived)
     {
+        var items = lootReceived.getItems();
 
+        for (ItemStack item : items)
+        {
+            var itemComp = _itemManager.getItemComposition(item.getId());
+
+            var dropMessage = new DropHttpMessage();
+            dropMessage.ItemId = item.getId();
+            dropMessage.ItemName = itemComp.getName();
+            dropMessage.Quantity = item.getQuantity();
+            dropMessage.GpValue = itemComp.getPrice();
+            dropMessage.Source = lootReceived.getName();
+            dropMessage.KillCount = -1;
+
+            if (dropMessage.GpValue > VALUABLE_DROP_THRESHOLD || dropMessage.IsCollectionLog)
+            {
+                dropMessage.IsImportant = true;
+            }
+
+            _messageQueue.put(dropMessage.DropUUID, dropMessage);
+
+            //if IsImportant call flush queue
+        }
     }
 
     private LinkedList<DropHttpMessage> GetHttpDrops(Collection<ItemStack> items)
