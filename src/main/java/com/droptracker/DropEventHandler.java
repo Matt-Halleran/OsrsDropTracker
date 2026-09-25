@@ -1,6 +1,6 @@
 package com.droptracker;
 
-import com.droptracker.PlayerDropClient.OsrsDataApiClient;
+import com.droptracker.PlayerDropClient.AddPlayerDropsRequestMessage;
 import com.droptracker.PlayerDropClient.DropHttpMessage;
 import net.runelite.api.Client;
 import net.runelite.client.events.ServerNpcLoot;
@@ -18,7 +18,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 public class DropEventHandler
 {
     private final ItemManager _itemManager;
-    private final OsrsDataApiClient _playerDropHttpClient;
     private final Client _client;
 
     private final static int VALUABLE_DROP_THRESHOLD = 1000000;
@@ -30,7 +29,6 @@ public class DropEventHandler
     public DropEventHandler(ItemManager itemManager, OkHttpClient okHttpClient, Client client)
     {
         _itemManager = itemManager;
-        _playerDropHttpClient = new OsrsDataApiClient(okHttpClient);
         _client = client;
         _messageQueue = new LinkedBlockingQueue<DropHttpMessage>(QUEUE_SIZE);
     }
@@ -44,6 +42,10 @@ public class DropEventHandler
         {
             dropBatch.put(msg.DropUUID, msg);
         }
+
+        var apiRequest = new AddPlayerDropsRequestMessage();
+        apiRequest.PlayerHash = String.valueOf(_client.getAccountHash());
+        apiRequest.Drops = dropBatch.values();
     }
 
     public void HandleEventDrop(LootReceived lootReceived)
