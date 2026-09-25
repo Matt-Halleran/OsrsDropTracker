@@ -145,25 +145,4 @@ public class DropEventHandler
         }
     }
 
-    private LinkedList<DropHttpMessage> GetHttpDrops(Collection<ItemStack> items)
-    {
-        var drops = new LinkedList<DropHttpMessage>();
-
-        for (ItemStack item : items)
-        {
-            var drop = new DropHttpMessage();
-            int itemId = item.getId();
-            var itemComposition = _itemManager.getItemComposition(itemId);
-
-            drop.ItemId = itemId;
-            drop.ItemName = itemComposition.getName();
-            drop.GpValue = itemComposition.getPrice();
-            drop.Quantity = item.getQuantity();
-
-            drops.add(drop);
-        }
-
-        return drops;
-    }
-
 }
