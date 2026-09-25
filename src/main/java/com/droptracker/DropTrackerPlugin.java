@@ -1,5 +1,6 @@
 package com.droptracker;
 
+import com.google.gson.Gson;
 import com.google.inject.Provides;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.ChatMessageType;
@@ -42,6 +43,9 @@ public class DropTrackerPlugin extends Plugin
 	@Inject
 	private OkHttpClient okHttpClient;
 
+	@Inject
+	private Gson _gson;
+
 	private static final Pattern PICKPOCKET_REGEX = Pattern.compile("You pick (the )?(?<target>.+)'s? pocket.*");
 
 	private int pickpocketTick = -1;
@@ -55,7 +59,7 @@ public class DropTrackerPlugin extends Plugin
 	@Override
 	protected void startUp() throws Exception
 	{
-		_dropEventHandler = new DropEventHandler(itemManager, okHttpClient, client);
+		_dropEventHandler = new DropEventHandler(itemManager, okHttpClient, client, _gson);
 
 		_flushService = Executors.newSingleThreadScheduledExecutor();
 		_flushService.scheduleAtFixedRate(_dropEventHandler::Flush, 30, 30, TimeUnit.SECONDS);
