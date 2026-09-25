@@ -21,8 +21,6 @@ import javax.inject.Inject;
 import java.util.concurrent.*;
 import java.util.regex.Pattern;
 
-import static java.util.concurrent.TimeUnit.SECONDS;
-
 @Slf4j
 @PluginDescriptor(
 	name = "Drop Tracker"

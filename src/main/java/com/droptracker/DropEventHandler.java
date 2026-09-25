@@ -1,6 +1,7 @@
 package com.droptracker;
 
 import com.droptracker.PlayerDropClient.AddPlayerDropsRequestMessage;
+import com.droptracker.PlayerDropClient.AddPlayerDropsResponseMessage;
 import com.droptracker.PlayerDropClient.DropHttpMessage;
 import com.google.gson.Gson;
 import net.runelite.api.Client;
@@ -8,12 +9,10 @@ import net.runelite.client.events.ServerNpcLoot;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.game.ItemStack;
 import net.runelite.client.plugins.loottracker.LootReceived;
-import okhttp3.MediaType;
-import okhttp3.OkHttpClient;
+import okhttp3.*;
 import lombok.extern.slf4j.Slf4j;
-import okhttp3.Request;
-import okhttp3.RequestBody;
 
+import java.io.IOException;
 import java.time.Instant;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -24,6 +23,7 @@ public class DropEventHandler
     private final ItemManager _itemManager;
     private final Client _client;
     private final Gson _gson;
+    private final OkHttpClient _okHttpClient;
 
     private final static int VALUABLE_DROP_THRESHOLD = 1000000;
     private final static int QUEUE_SIZE = 250;
@@ -39,52 +39,47 @@ public class DropEventHandler
         _client = client;
         _messageQueue = new LinkedBlockingQueue<DropHttpMessage>(QUEUE_SIZE);
         _gson = gson;
+        _okHttpClient = okHttpClient;
     }
 
     public void Flush()
     {
-        if (_messageQueue.isEmpty())
+        try
         {
-            return;
-        }
-
-        long accountHash = _client.getAccountHash();
-        if (accountHash == -1)
-        {
-            return;
-        }
-
-        int messageQueueCount = _messageQueue.size();
-        int batchesToSend = (messageQueueCount + MESSAGE_BATCH_SIZE - 1) / MESSAGE_BATCH_SIZE; //Small match trick to round up, to always ensure we clear the queue
-
-        for (int i = 0; i < batchesToSend; i++)
-        {
-            var dropBatch = new ConcurrentHashMap<String, DropHttpMessage>(100);
-            DropHttpMessage msg;
-
-            while (dropBatch.size() < MESSAGE_BATCH_SIZE && (msg = _messageQueue.poll()) != null)
+            if (_messageQueue.isEmpty())
             {
-                dropBatch.put(msg.DropUUID, msg);
+                return;
             }
 
-            if (dropBatch.isEmpty()) { return; }
+            long accountHash = _client.getAccountHash();
+            if (accountHash == -1)
+            {
+                return;
+            }
 
-            SendDropBatch(dropBatch, String.valueOf(accountHash));
+            int messageQueueCount = _messageQueue.size();
+            int batchesToSend = (messageQueueCount + MESSAGE_BATCH_SIZE - 1) / MESSAGE_BATCH_SIZE; //Small match trick to round up, to always ensure we clear the queue
+
+            for (int i = 0; i < batchesToSend; i++)
+            {
+                var dropBatch = new ConcurrentHashMap<String, DropHttpMessage>(100);
+                DropHttpMessage msg;
+
+                while (dropBatch.size() < MESSAGE_BATCH_SIZE && (msg = _messageQueue.poll()) != null)
+                {
+                    dropBatch.put(msg.DropUUID, msg);
+                }
+
+                if (dropBatch.isEmpty()) { return; }
+
+                SendDropBatch(dropBatch, String.valueOf(accountHash));
+            }
         }
-    }
+        catch (Exception ex)
+        {
+            log.warn("Drop flush failed", ex);
+        }
 
-    private void SendDropBatch(ConcurrentHashMap<String, DropHttpMessage> dropBatch, String accountHash) {
-        var apiRequest = new AddPlayerDropsRequestMessage();
-        apiRequest.PlayerHash = accountHash;
-        apiRequest.Drops = dropBatch.values();
-
-        String json = _gson.toJson(apiRequest);
-
-        RequestBody body = RequestBody.create(MediaType.get("application/json; charset=utf-8"), json);
-        Request request = new Request.Builder()
-                .url(API_BASE_URL + API_DROP_ENDPOINT)
-                .post(body)
-                .build();
     }
 
     public void HandleEventDrop(LootReceived lootReceived)
@@ -147,8 +142,6 @@ public class DropEventHandler
             {
                 log.debug("Message queue full ({}), dropping oldest unflushed drop", QUEUE_SIZE);
             }
-
-            //if IsImportant call flush queue
         }
     }
 
@@ -178,8 +171,6 @@ public class DropEventHandler
             {
                 log.debug("Message queue full ({}), dropping oldest unflushed drop", QUEUE_SIZE);
             }
-
-            //if IsImportant call flush queue
         }
     }
 
@@ -208,9 +199,60 @@ public class DropEventHandler
             {
                 log.debug("Message queue full ({}), dropping oldest unflushed drop", QUEUE_SIZE);
             }
-
-            //if IsImportant call flush queue
         }
     }
 
+    private void SendDropBatch(ConcurrentHashMap<String, DropHttpMessage> dropBatch, String accountHash) {
+        var apiRequest = new AddPlayerDropsRequestMessage();
+        apiRequest.PlayerHash = accountHash;
+        apiRequest.Drops = dropBatch.values();
+
+        String json = _gson.toJson(apiRequest);
+
+        RequestBody body = RequestBody.create(MediaType.get("application/json; charset=utf-8"), json);
+        Request request = new Request.Builder()
+                .url(API_BASE_URL + API_DROP_ENDPOINT)
+                .post(body)
+                .build();
+
+        _okHttpClient.newCall(request).enqueue(new Callback()
+        {
+            @Override
+            public void onFailure(Call call, IOException e)
+            {
+                log.debug("Drop batch upload failed, requeueing {} drops", dropBatch.size());
+                dropBatch.forEach((uuid, msg) -> _messageQueue.offer(msg));
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException
+            {
+                try (response)
+                {
+                    if (!response.isSuccessful() || response.body() == null)
+                    {
+                        log.debug("Drop batch upload returned {}, requeueing {} drops",
+                                response.code(), dropBatch.size());
+                        dropBatch.forEach((uuid, msg) -> _messageQueue.offer(msg));
+                        return;
+                    }
+
+                    var apiResponse = _gson.fromJson(response.body().string(),
+                            AddPlayerDropsResponseMessage.class);
+
+                    if (apiResponse.FailedDropUploads != null)
+                    {
+                        for (String uuid : apiResponse.FailedDropUploads)
+                        {
+                            DropHttpMessage msg = dropBatch.remove(uuid);
+                            if (msg != null)
+                            {
+                                _messageQueue.offer(msg);
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
 }
