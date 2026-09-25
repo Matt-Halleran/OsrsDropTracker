@@ -11,6 +11,7 @@ import okhttp3.OkHttpClient;
 
 import java.time.Instant;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.LinkedBlockingQueue;
 
 public class DropEventHandler
 {
@@ -20,20 +21,27 @@ public class DropEventHandler
 
     private final static int VALUABLE_DROP_THRESHOLD = 1000000;
     private final static int QUEUE_SIZE = 250;
+    private final static int MESSAGE_BATCH_SIZE = 100;
 
-    private ConcurrentHashMap<String, DropHttpMessage> _messageQueue;
+    private LinkedBlockingQueue<DropHttpMessage> _messageQueue;
 
     public DropEventHandler(ItemManager itemManager, OkHttpClient okHttpClient, Client client)
     {
         _itemManager = itemManager;
         _playerDropHttpClient = new OsrsDataApiClient(okHttpClient);
         _client = client;
-        _messageQueue = new ConcurrentHashMap<String, DropHttpMessage>(QUEUE_SIZE);
+        _messageQueue = new LinkedBlockingQueue<DropHttpMessage>(QUEUE_SIZE);
     }
 
     public void Flush()
     {
+        var dropBatch = new ConcurrentHashMap<String, DropHttpMessage>(100);
+        DropHttpMessage msg;
 
+        while (dropBatch.size() < MESSAGE_BATCH_SIZE && (msg = _messageQueue.poll()) != null)
+        {
+            dropBatch.put(msg.DropUUID, msg);
+        }
     }
 
     public void HandleEventDrop(LootReceived lootReceived)
@@ -59,7 +67,7 @@ public class DropEventHandler
                 dropMessage.IsImportant = true;
             }
 
-            _messageQueue.put(dropMessage.DropUUID, dropMessage);
+            _messageQueue.offer(dropMessage);
 
             //if IsImportant call flush queue
         }
@@ -89,7 +97,7 @@ public class DropEventHandler
                 dropMessage.IsImportant = true;
             }
 
-            _messageQueue.put(dropMessage.DropUUID, dropMessage);
+            _messageQueue.offer(dropMessage);
 
             //if IsImportant call flush queue
         }
@@ -117,7 +125,7 @@ public class DropEventHandler
                 dropMessage.IsImportant = true;
             }
 
-            _messageQueue.put(dropMessage.DropUUID, dropMessage);
+            _messageQueue.offer(dropMessage);
 
             //if IsImportant call flush queue
         }
@@ -144,7 +152,7 @@ public class DropEventHandler
                 dropMessage.IsImportant = true;
             }
 
-            _messageQueue.put(dropMessage.DropUUID, dropMessage);
+            _messageQueue.offer(dropMessage);
 
             //if IsImportant call flush queue
         }
