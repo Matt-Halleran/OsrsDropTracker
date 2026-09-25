@@ -6,6 +6,7 @@ import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
 import net.runelite.api.ItemComposition;
 import net.runelite.api.Player;
+import net.runelite.api.events.ChatMessage;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ServerNpcLoot;
@@ -14,6 +15,7 @@ import net.runelite.client.game.ItemStack;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.plugins.loottracker.LootReceived;
+import net.runelite.client.util.Text;
 import net.runelite.http.api.loottracker.LootRecordType;
 import okhttp3.OkHttpClient;
 
@@ -27,7 +29,7 @@ import java.util.regex.Pattern;
 )
 public class DropTrackerPlugin extends Plugin
 {
-	private final DropEventHandler _dropEventHandler;
+	private DropEventHandler _dropEventHandler;
 
 	@Inject
 	private Client client;
@@ -47,19 +49,25 @@ public class DropTrackerPlugin extends Plugin
 
 	public DropTrackerPlugin()
 	{
-		_dropEventHandler = new DropEventHandler(itemManager, okHttpClient, client);
 	}
 
 	@Override
 	protected void startUp() throws Exception
 	{
-		log.debug("Example started!");
+		_dropEventHandler = new DropEventHandler(itemManager, okHttpClient, client);
 	}
 
 	@Override
 	protected void shutDown() throws Exception
 	{
 		log.debug("Example stopped!");
+	}
+
+	@Subscribe
+	public void onChatMessage(ChatMessage e) {
+		if (PICKPOCKET_REGEX.matcher(Text.removeTags(e.getMessage())).matches()) {
+			pickpocketTick = client.getTickCount();
+		}
 	}
 
 	@Subscribe
@@ -70,6 +78,7 @@ public class DropTrackerPlugin extends Plugin
 		if (isPickpocket)
 		{
 			_dropEventHandler.HandlePickpocketDrop(serverNpcLoot);
+			return;
 		}
 
 		_dropEventHandler.HandleNpcDrop(serverNpcLoot);

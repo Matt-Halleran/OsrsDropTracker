@@ -16,7 +16,7 @@ public class DropHttpMessage
 
     public String ItemName;
 
-    public Instant TimeStamp;
+    public String TimeStamp;
 
     public String Source;
 

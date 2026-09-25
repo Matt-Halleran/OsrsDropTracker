@@ -2,19 +2,16 @@ package com.droptracker;
 
 import com.droptracker.PlayerDropClient.OsrsDataApiClient;
 import com.droptracker.PlayerDropClient.DropHttpMessage;
-import com.sun.jna.platform.win32.Guid;
 import net.runelite.api.Client;
-import net.runelite.api.Player;
 import net.runelite.client.events.ServerNpcLoot;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.game.ItemStack;
 import net.runelite.client.plugins.loottracker.LootReceived;
 import okhttp3.OkHttpClient;
 
-import java.util.ArrayList;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class DropEventHandler
@@ -37,6 +34,7 @@ public class DropEventHandler
     public void HandleEventDrop(LootReceived lootReceived)
     {
         var items = lootReceived.getItems();
+        String timeStamp = Instant.now().toString();
 
         for (ItemStack item : items)
         {
@@ -49,6 +47,7 @@ public class DropEventHandler
             dropMessage.GpValue = itemComp.getPrice();
             dropMessage.Source = lootReceived.getName();
             dropMessage.KillCount = -1;
+            dropMessage.TimeStamp = timeStamp;
 
             if (dropMessage.GpValue > VALUABLE_DROP_THRESHOLD || dropMessage.IsCollectionLog)
             {
@@ -65,6 +64,7 @@ public class DropEventHandler
     {
         var items = lootReceived.getItems();
         var npcComp = lootReceived.getComposition();
+        String timeStamp = Instant.now().toString();
 
         for (ItemStack item : items)
         {
@@ -77,6 +77,7 @@ public class DropEventHandler
             dropMessage.GpValue = itemComp.getPrice();
             dropMessage.Source = npcComp.getName();
             dropMessage.KillCount = -1;
+            dropMessage.TimeStamp = timeStamp;
 
             if (dropMessage.GpValue > VALUABLE_DROP_THRESHOLD || dropMessage.IsCollectionLog)
             {
