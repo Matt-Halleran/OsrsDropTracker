@@ -65,6 +65,13 @@ public class DropTrackerPlugin extends Plugin
 
 	@Subscribe
 	public void onChatMessage(ChatMessage e) {
+		ChatMessageType type = e.getType();
+		if (type != ChatMessageType.GAMEMESSAGE
+				&& type != ChatMessageType.SPAM
+				&& type != ChatMessageType.MESBOX) {
+			return;
+		}
+
 		if (PICKPOCKET_REGEX.matcher(Text.removeTags(e.getMessage())).matches()) {
 			pickpocketTick = client.getTickCount();
 		}
