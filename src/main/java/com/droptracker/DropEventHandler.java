@@ -31,13 +31,12 @@ public class DropEventHandler
     private final static String API_BASE_URL = "http://localhost:5117/";
     private final static String API_DROP_ENDPOINT = "api/drop";
 
-    private LinkedBlockingQueue<DropHttpMessage> _messageQueue;
+    private final ConcurrentHashMap<Long, LinkedBlockingQueue<DropHttpMessage>> _queuesByAccount = new ConcurrentHashMap<>();
 
     public DropEventHandler(ItemManager itemManager, OkHttpClient okHttpClient, Client client, Gson gson)
     {
         _itemManager = itemManager;
         _client = client;
-        _messageQueue = new LinkedBlockingQueue<DropHttpMessage>(QUEUE_SIZE);
         _gson = gson;
         _okHttpClient = okHttpClient;
     }
@@ -46,18 +45,20 @@ public class DropEventHandler
     {
         try
         {
-            if (_messageQueue.isEmpty())
-            {
-                return;
-            }
-
             long accountHash = _client.getAccountHash();
             if (accountHash == -1)
             {
                 return;
             }
 
-            int messageQueueCount = _messageQueue.size();
+            var messageQueue = GetQueueFor(accountHash);
+
+            if (messageQueue.isEmpty())
+            {
+                return;
+            }
+
+            int messageQueueCount = messageQueue.size();
             int batchesToSend = (messageQueueCount + MESSAGE_BATCH_SIZE - 1) / MESSAGE_BATCH_SIZE; //Small match trick to round up, to always ensure we clear the queue
 
             for (int i = 0; i < batchesToSend; i++)
@@ -65,27 +66,29 @@ public class DropEventHandler
                 var dropBatch = new ConcurrentHashMap<String, DropHttpMessage>(100);
                 DropHttpMessage msg;
 
-                while (dropBatch.size() < MESSAGE_BATCH_SIZE && (msg = _messageQueue.poll()) != null)
+                while (dropBatch.size() < MESSAGE_BATCH_SIZE && (msg = messageQueue.poll()) != null)
                 {
                     dropBatch.put(msg.DropUUID, msg);
                 }
 
                 if (dropBatch.isEmpty()) { return; }
 
-                SendDropBatch(dropBatch, String.valueOf(accountHash));
+                SendDropBatch(dropBatch, accountHash, messageQueue);
             }
         }
         catch (Exception ex)
         {
             log.warn("Drop flush failed", ex);
         }
-
     }
 
     public void HandleEventDrop(LootReceived lootReceived)
     {
-        var items = lootReceived.getItems();
         String timeStamp = Instant.now().toString();
+
+        var items = lootReceived.getItems();
+        long accountHash = _client.getAccountHash();
+        var messageQueue = GetQueueFor(accountHash);
 
         for (ItemStack item : items)
         {
@@ -105,7 +108,7 @@ public class DropEventHandler
                 dropMessage.IsImportant = true;
             }
 
-            if (!_messageQueue.offer(dropMessage))
+            if (!messageQueue.offer(dropMessage))
             {
                 log.debug("Message queue full ({}), dropping oldest unflushed drop", QUEUE_SIZE);
             }
@@ -116,9 +119,13 @@ public class DropEventHandler
 
     public void HandleNpcDrop(ServerNpcLoot lootReceived)
     {
+        String timeStamp = Instant.now().toString();
+
         var items = lootReceived.getItems();
         var npcComp = lootReceived.getComposition();
-        String timeStamp = Instant.now().toString();
+
+        long accountHash = _client.getAccountHash();
+        var messageQueue = GetQueueFor(accountHash);
 
         for (ItemStack item : items)
         {
@@ -138,7 +145,7 @@ public class DropEventHandler
                 dropMessage.IsImportant = true;
             }
 
-            if (!_messageQueue.offer(dropMessage))
+            if (!messageQueue.offer(dropMessage))
             {
                 log.debug("Message queue full ({}), dropping oldest unflushed drop", QUEUE_SIZE);
             }
@@ -147,8 +154,13 @@ public class DropEventHandler
 
     public void HandlePickpocketDrop(ServerNpcLoot lootReceived)
     {
+        String timeStamp = Instant.now().toString();
+
         var items = lootReceived.getItems();
         var npcComp = lootReceived.getComposition();
+
+        long accountHash = _client.getAccountHash();
+        var messageQueue = GetQueueFor(accountHash);
 
         for (ItemStack item : items)
         {
@@ -161,13 +173,14 @@ public class DropEventHandler
             dropMessage.GpValue = itemComp.getPrice();
             dropMessage.Source = npcComp.getName();
             dropMessage.KillCount = -1;
+            dropMessage.TimeStamp = timeStamp;
 
             if (dropMessage.GpValue > VALUABLE_DROP_THRESHOLD || dropMessage.CollectionLogCompleted)
             {
                 dropMessage.IsImportant = true;
             }
 
-            if (!_messageQueue.offer(dropMessage))
+            if (!messageQueue.offer(dropMessage))
             {
                 log.debug("Message queue full ({}), dropping oldest unflushed drop", QUEUE_SIZE);
             }
@@ -177,6 +190,9 @@ public class DropEventHandler
     public void HandleUnknownDrop(LootReceived lootReceived)
     {
         var items = lootReceived.getItems();
+
+        long accountHash = _client.getAccountHash();
+        var messageQueue = GetQueueFor(accountHash);
 
         for (ItemStack item : items)
         {
@@ -195,14 +211,20 @@ public class DropEventHandler
                 dropMessage.IsImportant = true;
             }
 
-            if (!_messageQueue.offer(dropMessage))
+            if (!messageQueue.offer(dropMessage))
             {
                 log.debug("Message queue full ({}), dropping oldest unflushed drop", QUEUE_SIZE);
             }
         }
     }
 
-    private void SendDropBatch(ConcurrentHashMap<String, DropHttpMessage> dropBatch, String accountHash) {
+    private LinkedBlockingQueue<DropHttpMessage> GetQueueFor(long accountHash)
+    {
+        return _queuesByAccount.computeIfAbsent(accountHash,
+                h -> new LinkedBlockingQueue<>(QUEUE_SIZE));
+    }
+
+    private void SendDropBatch(ConcurrentHashMap<String, DropHttpMessage> dropBatch, long accountHash, LinkedBlockingQueue<DropHttpMessage> messageQueue) {
         var apiRequest = new AddPlayerDropsRequestMessage();
         apiRequest.PlayerHash = accountHash;
         apiRequest.Drops = dropBatch.values();
@@ -221,7 +243,12 @@ public class DropEventHandler
             public void onFailure(Call call, IOException e)
             {
                 log.debug("Drop batch upload failed, requeueing {} drops", dropBatch.size());
-                dropBatch.forEach((uuid, msg) -> _messageQueue.offer(msg));
+                dropBatch.forEach((uuid, msg) -> {
+                    if (!messageQueue.offer(msg))
+                    {
+                        log.debug("Message queue full ({}), dropping requeued drop {}", QUEUE_SIZE, uuid);
+                    }
+                });
             }
 
             @Override
@@ -233,7 +260,13 @@ public class DropEventHandler
                     {
                         log.debug("Drop batch upload returned {}, requeueing {} drops",
                                 response.code(), dropBatch.size());
-                        dropBatch.forEach((uuid, msg) -> _messageQueue.offer(msg));
+
+                        dropBatch.forEach((uuid, msg) -> {
+                            if (!messageQueue.offer(msg))
+                            {
+                                log.debug("Message queue full ({}), dropping requeued drop {}", QUEUE_SIZE, uuid);
+                            }
+                        });
                         return;
                     }
 
@@ -247,7 +280,10 @@ public class DropEventHandler
                             DropHttpMessage msg = dropBatch.remove(uuid);
                             if (msg != null)
                             {
-                                _messageQueue.offer(msg);
+                                if (!messageQueue.offer(msg))
+                                {
+                                    log.debug("Message queue full ({}), dropping requeued drop {}", QUEUE_SIZE, uuid);
+                                }
                             }
                         }
                     }
