@@ -19,7 +19,7 @@ public class DropEventHandler
     private final ItemManager _itemManager;
     private final OsrsDataApiClient _playerDropHttpClient;
     private final Client _client;
-    private static int VALUABLE_DROP_THRESHOLD = 1000000;
+    private final static int VALUABLE_DROP_THRESHOLD = 1000000;
 
     private ConcurrentHashMap<String, DropHttpMessage> _messageQueue;
 
