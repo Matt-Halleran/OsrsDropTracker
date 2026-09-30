@@ -4,6 +4,7 @@ import com.droptracker.PlayerDropClient.AddPlayerDropsRequestMessage;
 import com.droptracker.PlayerDropClient.AddPlayerDropsResponseMessage;
 import com.droptracker.PlayerDropClient.DropHttpMessage;
 import com.google.gson.Gson;
+import com.google.inject.spi.Message;
 import net.runelite.api.Client;
 import net.runelite.client.events.ServerNpcLoot;
 import net.runelite.client.game.ItemManager;
@@ -12,12 +13,15 @@ import net.runelite.client.plugins.loottracker.LootReceived;
 import okhttp3.*;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 
 @Slf4j
+@Singleton
 public class DropEventHandler
 {
     private final ItemManager _itemManager;
@@ -33,6 +37,7 @@ public class DropEventHandler
 
     private final ConcurrentHashMap<Long, LinkedBlockingQueue<DropHttpMessage>> _queuesByAccount = new ConcurrentHashMap<>();
 
+    @Inject
     public DropEventHandler(ItemManager itemManager, OkHttpClient okHttpClient, Client client, Gson gson)
     {
         _itemManager = itemManager;
