@@ -1,10 +1,7 @@
 package com.droptracker;
 
-import com.droptracker.PlayerDropClient.AddPlayerDropsRequestMessage;
-import com.droptracker.PlayerDropClient.AddPlayerDropsResponseMessage;
 import com.droptracker.PlayerDropClient.DropHttpMessage;
 import com.google.gson.Gson;
-import com.google.inject.spi.Message;
 import net.runelite.api.Client;
 import net.runelite.client.events.ServerNpcLoot;
 import net.runelite.client.game.ItemManager;
@@ -15,10 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.io.IOException;
 import java.time.Instant;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.LinkedBlockingQueue;
 
 @Slf4j
 @Singleton
