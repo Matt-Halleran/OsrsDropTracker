@@ -1,7 +1,6 @@
 package com.droptracker;
 
 import com.droptracker.PlayerDropClient.DropHttpMessage;
-import com.google.gson.Gson;
 import net.runelite.api.Client;
 import net.runelite.client.events.ServerNpcLoot;
 import net.runelite.client.game.ItemManager;
