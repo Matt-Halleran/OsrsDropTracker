@@ -36,6 +36,11 @@ public class MessageQueueHandler {
 
     public void QueueMessage(DropHttpMessage dropMessage, long accountHash)
     {
+        if (accountHash == -1)
+        {
+            log.debug("Cannot queue drops while logged out.");
+        }
+
         var messageQueue = GetQueueFor(accountHash);
 
         if (!messageQueue.offer(dropMessage))
