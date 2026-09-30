@@ -27,7 +27,6 @@ import java.util.regex.Pattern;
 )
 public class DropTrackerPlugin extends Plugin
 {
-	private DropEventHandler _dropEventHandler;
 
 	@Inject
 	private Client client;
@@ -44,6 +43,9 @@ public class DropTrackerPlugin extends Plugin
 	@Inject
 	private Gson _gson;
 
+	@Inject
+	private DropEventHandler _dropEventHandler;
+
 	private static final Pattern PICKPOCKET_REGEX = Pattern.compile("You pick (the )?(?<target>.+)'s? pocket.*");
 
 	private int pickpocketTick = -1;
@@ -57,8 +59,6 @@ public class DropTrackerPlugin extends Plugin
 	@Override
 	protected void startUp() throws Exception
 	{
-		_dropEventHandler = new DropEventHandler(itemManager, okHttpClient, client, _gson);
-
 		_flushService = Executors.newSingleThreadScheduledExecutor();
 		_flushService.scheduleAtFixedRate(_dropEventHandler::Flush, 30, 30, TimeUnit.SECONDS);
 	}

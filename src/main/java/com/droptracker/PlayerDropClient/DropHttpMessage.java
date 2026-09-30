@@ -23,7 +23,7 @@ public class DropHttpMessage
 
     public int KillCount = -1;
 
-    public int GpValue = -1;
+    public long GpValue = -1;
 
     public boolean CollectionLogCompleted = false;
 
