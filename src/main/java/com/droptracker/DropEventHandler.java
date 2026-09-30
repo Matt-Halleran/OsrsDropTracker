@@ -20,18 +20,16 @@ public class DropEventHandler
 {
     private final ItemManager _itemManager;
     private final Client _client;
-    private final Gson _gson;
     private final OkHttpClient _okHttpClient;
     private final MessageQueueHandler _messageQueueHandler;
 
     private final static int VALUABLE_DROP_THRESHOLD = 1000000;
 
     @Inject
-    public DropEventHandler(ItemManager itemManager, OkHttpClient okHttpClient, Client client, Gson gson, MessageQueueHandler messageQueueHandler)
+    public DropEventHandler(ItemManager itemManager, OkHttpClient okHttpClient, Client client, MessageQueueHandler messageQueueHandler)
     {
         _itemManager = itemManager;
         _client = client;
-        _gson = gson;
         _okHttpClient = okHttpClient;
         _messageQueueHandler = messageQueueHandler;
     }
