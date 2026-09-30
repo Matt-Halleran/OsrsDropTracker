@@ -92,13 +92,14 @@ public class DropEventHandler
 
         for (ItemStack item : items)
         {
-            var itemComp = _itemManager.getItemComposition(item.getId());
+            int itemId = item.getId();
+            var itemComp = _itemManager.getItemComposition(itemId);
 
             var dropMessage = new DropHttpMessage();
-            dropMessage.ItemId = item.getId();
+            dropMessage.ItemId = itemId;
             dropMessage.ItemName = itemComp.getName();
             dropMessage.Quantity = item.getQuantity();
-            dropMessage.GpValue = itemComp.getPrice();
+            dropMessage.GpValue = _itemManager.getItemPrice(itemId);
             dropMessage.Source = lootReceived.getName();
             dropMessage.KillCount = -1;
             dropMessage.TimeStamp = timeStamp;
@@ -129,13 +130,14 @@ public class DropEventHandler
 
         for (ItemStack item : items)
         {
-            var itemComp = _itemManager.getItemComposition(item.getId());
+            int itemId = item.getId();
+            var itemComp = _itemManager.getItemComposition(itemId);
 
             var dropMessage = new DropHttpMessage();
-            dropMessage.ItemId = item.getId();
+            dropMessage.ItemId = itemId;
             dropMessage.ItemName = itemComp.getName();
             dropMessage.Quantity = item.getQuantity();
-            dropMessage.GpValue = itemComp.getPrice();
+            dropMessage.GpValue = _itemManager.getItemPrice(itemId);
             dropMessage.Source = npcComp.getName();
             dropMessage.KillCount = -1;
             dropMessage.TimeStamp = timeStamp;
@@ -164,13 +166,14 @@ public class DropEventHandler
 
         for (ItemStack item : items)
         {
-            var itemComp = _itemManager.getItemComposition(item.getId());
+            int itemId = item.getId();
+            var itemComp = _itemManager.getItemComposition(itemId);
 
             var dropMessage = new DropHttpMessage();
-            dropMessage.ItemId = item.getId();
+            dropMessage.ItemId = itemId;
             dropMessage.ItemName = itemComp.getName();
             dropMessage.Quantity = item.getQuantity();
-            dropMessage.GpValue = itemComp.getPrice();
+            dropMessage.GpValue = _itemManager.getItemPrice(itemId);
             dropMessage.Source = npcComp.getName();
             dropMessage.KillCount = -1;
             dropMessage.TimeStamp = timeStamp;
