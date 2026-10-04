@@ -51,6 +51,27 @@ public class MessageQueueHandler {
 
     }
 
+    public DropHttpMessage FindDropByItemName(long accountHash, String itemName)
+    {
+        var queue = _queuesByAccount.get(accountHash);
+        if (queue == null)
+        {
+            return null;
+        }
+
+        // Queue iterates head-to-tail (oldest first); keep the last match
+        // so a repeated item name flips the most recent drop, not an older one.
+        DropHttpMessage latest = null;
+        for (DropHttpMessage msg : queue)
+        {
+            if (itemName.equals(msg.ItemName))
+            {
+                latest = msg;
+            }
+        }
+        return latest;
+    }
+
     public void Flush(long accountHash)
     {
         try
