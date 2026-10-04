@@ -158,7 +158,7 @@ public class DropEventHandler
 
     private boolean IsRecentCollectionLogEntry(String itemName)
     {
-        Long loggedAt = _collectionLogMessages.get(itemName);
+        Long loggedAt = _collectionLogMessages.remove(itemName);
         return loggedAt != null && System.currentTimeMillis() - loggedAt <= COLLECTION_LOG_LOOKBACK_MS;
     }
 
