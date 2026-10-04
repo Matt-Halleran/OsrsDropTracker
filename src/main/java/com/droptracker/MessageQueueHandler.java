@@ -39,6 +39,7 @@ public class MessageQueueHandler {
         if (accountHash == -1)
         {
             log.debug("Cannot queue drops while logged out.");
+            return;
         }
 
         var messageQueue = GetQueueFor(accountHash);
