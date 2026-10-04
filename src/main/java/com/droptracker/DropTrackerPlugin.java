@@ -21,7 +21,6 @@ import net.runelite.http.api.loottracker.LootRecordType;
 import okhttp3.OkHttpClient;
 
 import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.util.concurrent.*;
 import java.util.regex.Pattern;
 
@@ -74,7 +73,6 @@ public class DropTrackerPlugin extends Plugin
 	@Override
 	protected void shutDown() throws Exception
 	{
-		_flushService.shutdown();
 	}
 
 	@Subscribe
@@ -149,12 +147,5 @@ public class DropTrackerPlugin extends Plugin
 	DropTrackerConfig provideConfig(ConfigManager configManager)
 	{
 		return configManager.getConfig(DropTrackerConfig.class);
-	}
-
-	@Provides
-	@Singleton
-	ScheduledExecutorService provideScheduledExecutorService()
-	{
-		return Executors.newSingleThreadScheduledExecutor();
 	}
 }
