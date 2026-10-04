@@ -12,6 +12,8 @@ import lombok.extern.slf4j.Slf4j;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.time.Instant;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @Singleton
@@ -21,6 +23,7 @@ public class DropEventHandler
     private final Client _client;
     private final OkHttpClient _okHttpClient;
     private final MessageQueueHandler _messageQueueHandler;
+    private final Map<String, Long> _collectionLogMessages = new ConcurrentHashMap<String, Long>();
 
     private final static int VALUABLE_DROP_THRESHOLD = 1000000;
 
@@ -159,5 +162,10 @@ public class DropEventHandler
 
             _messageQueueHandler.QueueMessage(dropMessage, accountHash);
         }
+    }
+
+    public void HandleCollectionLogEntry(String itemName)
+    {
+        _collectionLogMessages.put(itemName, System.currentTimeMillis());
     }
 }

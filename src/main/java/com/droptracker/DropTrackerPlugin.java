@@ -1,5 +1,6 @@
 package com.droptracker;
 
+import net.runelite.api.gameval.VarbitID;
 import com.google.gson.Gson;
 import com.google.inject.Provides;
 import lombok.extern.slf4j.Slf4j;
@@ -47,6 +48,7 @@ public class DropTrackerPlugin extends Plugin
 	private DropEventHandler _dropEventHandler;
 
 	private static final Pattern PICKPOCKET_REGEX = Pattern.compile("You pick (the )?(?<target>.+)'s? pocket.*");
+	private static final String COLLECTION_LOG_TEXT = "New item added to your collection log: ";
 
 	private int pickpocketTick = -1;
 
@@ -78,8 +80,17 @@ public class DropTrackerPlugin extends Plugin
 			return;
 		}
 
-		if (PICKPOCKET_REGEX.matcher(Text.removeTags(e.getMessage())).matches()) {
+		String message = e.getMessage();
+
+		if (PICKPOCKET_REGEX.matcher(Text.removeTags(message)).matches())
+		{
 			pickpocketTick = client.getTickCount();
+		}
+
+		if (message.startsWith(COLLECTION_LOG_TEXT)
+				&& client.getVarbitValue(VarbitID.OPTION_COLLECTION_NEW_ITEM) == 1) {
+			String entry = Text.removeTags(message).substring(COLLECTION_LOG_TEXT.length());
+			_dropEventHandler.HandleCollectionLogEntry(entry);
 		}
 	}
 
