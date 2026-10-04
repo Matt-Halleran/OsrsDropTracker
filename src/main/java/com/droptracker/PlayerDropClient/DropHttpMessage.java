@@ -19,6 +19,10 @@ public class DropHttpMessage
 
     public String Source;
 
+    public String SourceId;
+
+    public String SourceType;
+
     public int Quantity = -1;
 
     public int KillCount = -1;
