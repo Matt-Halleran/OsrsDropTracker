@@ -35,7 +35,7 @@ public class DropEventHandler
 
 
     @Inject
-    public DropEventHandler(ItemManager itemManager, OkHttpClient okHttpClient, Client client, MessageQueueHandler messageQueueHandler, ScheduledExecutorService flushService)
+    public DropEventHandler(ItemManager itemManager, Client client, MessageQueueHandler messageQueueHandler, ScheduledExecutorService flushService)
     {
         _itemManager = itemManager;
         _client = client;
