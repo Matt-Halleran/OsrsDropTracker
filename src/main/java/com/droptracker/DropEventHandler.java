@@ -15,6 +15,7 @@ import javax.inject.Singleton;
 import java.time.Instant;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ScheduledExecutorService;
 
 @Slf4j
 @Singleton
@@ -22,20 +23,20 @@ public class DropEventHandler
 {
     private final ItemManager _itemManager;
     private final Client _client;
-    private final OkHttpClient _okHttpClient;
     private final MessageQueueHandler _messageQueueHandler;
     private final Map<String, Long> _collectionLogMessages = new ConcurrentHashMap<String, Long>();
+    private final ScheduledExecutorService _flushService;
 
     private final static int VALUABLE_DROP_THRESHOLD = 1000000;
     private static final long COLLECTION_LOG_LOOKBACK_MS = 10_000;
 
     @Inject
-    public DropEventHandler(ItemManager itemManager, OkHttpClient okHttpClient, Client client, MessageQueueHandler messageQueueHandler)
+    public DropEventHandler(ItemManager itemManager, OkHttpClient okHttpClient, Client client, MessageQueueHandler messageQueueHandler, ScheduledExecutorService flushService)
     {
         _itemManager = itemManager;
         _client = client;
-        _okHttpClient = okHttpClient;
         _messageQueueHandler = messageQueueHandler;
+        _flushService = flushService;
     }
 
     public void Flush()
