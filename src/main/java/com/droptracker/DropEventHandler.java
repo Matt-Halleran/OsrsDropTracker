@@ -125,7 +125,6 @@ public class DropEventHandler
             dropMessage.ItemName = itemComp.getName();
             dropMessage.Quantity = item.getQuantity();
             dropMessage.GpValue = _itemManager.getItemPrice(itemId);
-            dropMessage.Source = npcComp.getName();
             dropMessage.KillCount = -1;
             dropMessage.TimeStamp = timeStamp;
             dropMessage.Source = npcComp.getName();
@@ -156,10 +155,9 @@ public class DropEventHandler
             dropMessage.ItemName = itemComp.getName();
             dropMessage.Quantity = item.getQuantity();
             dropMessage.GpValue = _itemManager.getItemPrice(itemId);
-            dropMessage.Source = lootReceived.getName();
             dropMessage.KillCount = -1;
-            dropMessage.SourceType = lootReceived.getType().toString();
             dropMessage.Source = lootReceived.getName();
+            dropMessage.SourceType = lootReceived.getType().toString();
 
             if (dropMessage.GpValue > VALUABLE_DROP_THRESHOLD || dropMessage.CollectionLogCompleted)
             {
