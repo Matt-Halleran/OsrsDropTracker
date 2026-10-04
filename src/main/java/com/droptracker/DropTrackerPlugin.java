@@ -1,5 +1,7 @@
 package com.droptracker;
 
+import net.runelite.api.GameState;
+import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.gameval.VarbitID;
 import com.google.gson.Gson;
 import com.google.inject.Provides;
@@ -65,6 +67,8 @@ public class DropTrackerPlugin extends Plugin
 	protected void startUp() throws Exception
 	{
 		_flushService.scheduleAtFixedRate(_dropEventHandler::Flush, 30, 30, TimeUnit.SECONDS);
+
+
 	}
 
 	@Override
@@ -129,7 +133,17 @@ public class DropTrackerPlugin extends Plugin
 		}
 	}
 
-	//ServerNpcLoot
+	@Subscribe
+	public void onGameStateChanged(GameStateChanged gameStateChanged)
+	{
+		if (gameStateChanged.getGameState() == GameState.LOGGED_IN
+				&& client.getVarbitValue(VarbitID.OPTION_COLLECTION_NEW_ITEM) != 1)
+		{
+			client.addChatMessage(ChatMessageType.GAMEMESSAGE, "",
+					"Drop Tracker: your collection log chat notification is off. Enable it in Settings > Chat so collection log drops get detected.",
+					null);
+		}
+	}
 
 	@Provides
 	DropTrackerConfig provideConfig(ConfigManager configManager)
