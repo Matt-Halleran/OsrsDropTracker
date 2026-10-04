@@ -6,6 +6,7 @@ import net.runelite.client.events.ServerNpcLoot;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.game.ItemStack;
 import net.runelite.client.plugins.loottracker.LootReceived;
+import net.runelite.http.api.loottracker.LootRecordType;
 import okhttp3.*;
 import lombok.extern.slf4j.Slf4j;
 
@@ -58,6 +59,7 @@ public class DropEventHandler
             dropMessage.Source = lootReceived.getName();
             dropMessage.KillCount = -1;
             dropMessage.TimeStamp = timeStamp;
+            dropMessage.SourceType = lootReceived.getType().toString();
 
             if (dropMessage.GpValue > VALUABLE_DROP_THRESHOLD || dropMessage.CollectionLogCompleted)
             {
@@ -92,6 +94,8 @@ public class DropEventHandler
             dropMessage.Source = npcComp.getName();
             dropMessage.KillCount = -1;
             dropMessage.TimeStamp = timeStamp;
+            dropMessage.SourceType = LootRecordType.NPC.toString();
+            dropMessage.SourceId = String.valueOf(npcComp.getId());
 
             if (dropMessage.GpValue > VALUABLE_DROP_THRESHOLD || dropMessage.CollectionLogCompleted)
             {
@@ -124,6 +128,9 @@ public class DropEventHandler
             dropMessage.Source = npcComp.getName();
             dropMessage.KillCount = -1;
             dropMessage.TimeStamp = timeStamp;
+            dropMessage.Source = npcComp.getName();
+            dropMessage.SourceType = LootRecordType.PICKPOCKET.toString();
+            dropMessage.SourceId = String.valueOf(npcComp.getId());
 
             if (dropMessage.GpValue > VALUABLE_DROP_THRESHOLD || dropMessage.CollectionLogCompleted)
             {
@@ -151,6 +158,8 @@ public class DropEventHandler
             dropMessage.GpValue = _itemManager.getItemPrice(itemId);
             dropMessage.Source = lootReceived.getName();
             dropMessage.KillCount = -1;
+            dropMessage.SourceType = lootReceived.getType().toString();
+            dropMessage.Source = lootReceived.getName();
 
             if (dropMessage.GpValue > VALUABLE_DROP_THRESHOLD || dropMessage.CollectionLogCompleted)
             {
