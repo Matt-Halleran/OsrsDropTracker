@@ -120,33 +120,6 @@ public class DropEventHandler
         ProcessLootReceived(lootReceived);
     }
 
-    private void ProcessLootReceived(LootReceived lootReceived)
-    {
-        var items = lootReceived.getItems();
-        long accountHash = _client.getAccountHash();
-
-        for (ItemStack item : items)
-        {
-            int itemId = item.getId();
-            var itemComp = _itemManager.getItemComposition(itemId);
-
-            var dropMessage = new DropHttpMessage();
-            dropMessage.ItemId = itemId;
-            dropMessage.ItemName = itemComp.getName();
-            dropMessage.Quantity = item.getQuantity();
-            dropMessage.GpValue = _itemManager.getItemPrice(itemId);
-            dropMessage.KillCount = -1;
-            dropMessage.Source = lootReceived.getName();
-            dropMessage.SourceType = lootReceived.getType().toString();
-
-            if (dropMessage.GpValue > VALUABLE_DROP_THRESHOLD || dropMessage.CollectionLogCompleted)
-            {
-                dropMessage.IsImportant = true;
-            }
-
-            _messageQueueHandler.QueueMessage(dropMessage, accountHash);
-        }
-    }
 
     public void HandleCollectionLogEntry(String itemName)
     {
@@ -166,4 +139,35 @@ public class DropEventHandler
 
         _collectionLogMessages.put(itemName, timeStamp);
     }
+
+    private void ProcessLootReceived(LootReceived lootReceived)
+    {
+        String timeStamp = Instant.now().toString();
+        var items = lootReceived.getItems();
+        long accountHash = _client.getAccountHash();
+
+        for (ItemStack item : items)
+        {
+            int itemId = item.getId();
+            var itemComp = _itemManager.getItemComposition(itemId);
+
+            var dropMessage = new DropHttpMessage();
+            dropMessage.ItemId = itemId;
+            dropMessage.ItemName = itemComp.getName();
+            dropMessage.Quantity = item.getQuantity();
+            dropMessage.TimeStamp = timeStamp;
+            dropMessage.GpValue = _itemManager.getItemPrice(itemId);
+            dropMessage.KillCount = -1;
+            dropMessage.Source = lootReceived.getName();
+            dropMessage.SourceType = lootReceived.getType().toString();
+
+            if (dropMessage.GpValue > VALUABLE_DROP_THRESHOLD || dropMessage.CollectionLogCompleted)
+            {
+                dropMessage.IsImportant = true;
+            }
+
+            _messageQueueHandler.QueueMessage(dropMessage, accountHash);
+        }
+    }
+
 }
