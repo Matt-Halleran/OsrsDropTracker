@@ -16,6 +16,8 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Slf4j
 @Singleton
@@ -26,9 +28,11 @@ public class DropEventHandler
     private final MessageQueueHandler _messageQueueHandler;
     private final Map<String, Long> _collectionLogMessages = new ConcurrentHashMap<String, Long>();
     private final ScheduledExecutorService _flushService;
+    private final AtomicBoolean _importantFlushScheduled = new AtomicBoolean(false);
 
     private final static int VALUABLE_DROP_THRESHOLD = 1000000;
     private static final long COLLECTION_LOG_LOOKBACK_MS = 10_000;
+
 
     @Inject
     public DropEventHandler(ItemManager itemManager, OkHttpClient okHttpClient, Client client, MessageQueueHandler messageQueueHandler, ScheduledExecutorService flushService)
@@ -115,6 +119,11 @@ public class DropEventHandler
             }
 
             _messageQueueHandler.QueueMessage(dropMessage, accountHash);
+
+            if (dropMessage.IsImportant)
+            {
+                ScheduleImportantFlush();
+            }
         }
     }
 
@@ -154,6 +163,11 @@ public class DropEventHandler
             }
 
             _messageQueueHandler.QueueMessage(dropMessage, accountHash);
+
+            if (dropMessage.IsImportant)
+            {
+                ScheduleImportantFlush();
+            }
         }
     }
 
@@ -161,6 +175,18 @@ public class DropEventHandler
     {
         Long loggedAt = _collectionLogMessages.remove(itemName);
         return loggedAt != null && System.currentTimeMillis() - loggedAt <= COLLECTION_LOG_LOOKBACK_MS;
+    }
+
+    private void ScheduleImportantFlush()
+    {
+        if (_importantFlushScheduled.compareAndSet(false, true))
+        {
+            _flushService.schedule(() ->
+            {
+                _importantFlushScheduled.set(false);
+                Flush();
+            }, 1200, TimeUnit.MILLISECONDS);
+        }
     }
 
 }
