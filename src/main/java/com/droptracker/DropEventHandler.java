@@ -27,6 +27,7 @@ public class DropEventHandler
     private final Map<String, Long> _collectionLogMessages = new ConcurrentHashMap<String, Long>();
 
     private final static int VALUABLE_DROP_THRESHOLD = 1000000;
+    private static final long COLLECTION_LOG_LOOKBACK_MS = 10_000;
 
     @Inject
     public DropEventHandler(ItemManager itemManager, OkHttpClient okHttpClient, Client client, MessageQueueHandler messageQueueHandler)
@@ -102,6 +103,11 @@ public class DropEventHandler
             dropMessage.Source = lootReceived.getName();
             dropMessage.SourceType = lootReceived.getType().toString();
 
+            if (IsRecentCollectionLogEntry(dropMessage.ItemName))
+            {
+                dropMessage.CollectionLogCompleted = true;
+            }
+
             if (dropMessage.GpValue > VALUABLE_DROP_THRESHOLD || dropMessage.CollectionLogCompleted)
             {
                 dropMessage.IsImportant = true;
@@ -136,6 +142,11 @@ public class DropEventHandler
             dropMessage.SourceType = lootRecordType.toString();
             dropMessage.SourceId = String.valueOf(npcComp.getId());
 
+            if (IsRecentCollectionLogEntry(dropMessage.ItemName))
+            {
+                dropMessage.CollectionLogCompleted = true;
+            }
+
             if (dropMessage.GpValue > VALUABLE_DROP_THRESHOLD || dropMessage.CollectionLogCompleted)
             {
                 dropMessage.IsImportant = true;
@@ -143,6 +154,12 @@ public class DropEventHandler
 
             _messageQueueHandler.QueueMessage(dropMessage, accountHash);
         }
+    }
+
+    private boolean IsRecentCollectionLogEntry(String itemName)
+    {
+        Long loggedAt = _collectionLogMessages.get(itemName);
+        return loggedAt != null && System.currentTimeMillis() - loggedAt <= COLLECTION_LOG_LOOKBACK_MS;
     }
 
 }
