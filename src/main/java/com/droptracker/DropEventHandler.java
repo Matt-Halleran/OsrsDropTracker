@@ -47,79 +47,20 @@ public class DropEventHandler
         ProcessLootReceived(lootReceived);
     }
 
-    public void HandleNpcDrop(ServerNpcLoot lootReceived)
-    {
-        String timeStamp = Instant.now().toString();
-
-        var items = lootReceived.getItems();
-        var npcComp = lootReceived.getComposition();
-
-        long accountHash = _client.getAccountHash();
-
-        for (ItemStack item : items)
-        {
-            int itemId = item.getId();
-            var itemComp = _itemManager.getItemComposition(itemId);
-
-            var dropMessage = new DropHttpMessage();
-            dropMessage.ItemId = itemId;
-            dropMessage.ItemName = itemComp.getName();
-            dropMessage.Quantity = item.getQuantity();
-            dropMessage.GpValue = _itemManager.getItemPrice(itemId);
-            dropMessage.Source = npcComp.getName();
-            dropMessage.KillCount = -1;
-            dropMessage.TimeStamp = timeStamp;
-            dropMessage.SourceType = LootRecordType.NPC.toString();
-            dropMessage.SourceId = String.valueOf(npcComp.getId());
-
-            if (dropMessage.GpValue > VALUABLE_DROP_THRESHOLD || dropMessage.CollectionLogCompleted)
-            {
-                dropMessage.IsImportant = true;
-            }
-
-            _messageQueueHandler.QueueMessage(dropMessage, accountHash);
-        }
-    }
-
-    public void HandlePickpocketDrop(ServerNpcLoot lootReceived)
-    {
-        String timeStamp = Instant.now().toString();
-
-        var items = lootReceived.getItems();
-        var npcComp = lootReceived.getComposition();
-
-        long accountHash = _client.getAccountHash();
-
-        for (ItemStack item : items)
-        {
-            int itemId = item.getId();
-            var itemComp = _itemManager.getItemComposition(itemId);
-
-            var dropMessage = new DropHttpMessage();
-            dropMessage.ItemId = itemId;
-            dropMessage.ItemName = itemComp.getName();
-            dropMessage.Quantity = item.getQuantity();
-            dropMessage.GpValue = _itemManager.getItemPrice(itemId);
-            dropMessage.KillCount = -1;
-            dropMessage.TimeStamp = timeStamp;
-            dropMessage.Source = npcComp.getName();
-            dropMessage.SourceType = LootRecordType.PICKPOCKET.toString();
-            dropMessage.SourceId = String.valueOf(npcComp.getId());
-
-            if (dropMessage.GpValue > VALUABLE_DROP_THRESHOLD || dropMessage.CollectionLogCompleted)
-            {
-                dropMessage.IsImportant = true;
-            }
-
-            _messageQueueHandler.QueueMessage(dropMessage, accountHash);
-        }
-    }
-
     public void HandleUnknownDrop(LootReceived lootReceived)
     {
         ProcessLootReceived(lootReceived);
     }
 
+    public void HandleNpcDrop(ServerNpcLoot lootReceived)
+    {
+        ProcessServerNpcLoot(lootReceived, LootRecordType.NPC);
+    }
+
+    public void HandlePickpocketDrop(ServerNpcLoot lootReceived)
+    {
+        ProcessServerNpcLoot(lootReceived, LootRecordType.PICKPOCKET);
+    }
 
     public void HandleCollectionLogEntry(String itemName)
     {
@@ -160,6 +101,40 @@ public class DropEventHandler
             dropMessage.KillCount = -1;
             dropMessage.Source = lootReceived.getName();
             dropMessage.SourceType = lootReceived.getType().toString();
+
+            if (dropMessage.GpValue > VALUABLE_DROP_THRESHOLD || dropMessage.CollectionLogCompleted)
+            {
+                dropMessage.IsImportant = true;
+            }
+
+            _messageQueueHandler.QueueMessage(dropMessage, accountHash);
+        }
+    }
+
+    private void ProcessServerNpcLoot(ServerNpcLoot lootReceived, LootRecordType lootRecordType)
+    {
+        String timeStamp = Instant.now().toString();
+
+        var items = lootReceived.getItems();
+        var npcComp = lootReceived.getComposition();
+
+        long accountHash = _client.getAccountHash();
+
+        for (ItemStack item : items)
+        {
+            int itemId = item.getId();
+            var itemComp = _itemManager.getItemComposition(itemId);
+
+            var dropMessage = new DropHttpMessage();
+            dropMessage.ItemId = itemId;
+            dropMessage.ItemName = itemComp.getName();
+            dropMessage.Quantity = item.getQuantity();
+            dropMessage.GpValue = _itemManager.getItemPrice(itemId);
+            dropMessage.Source = npcComp.getName();
+            dropMessage.KillCount = -1;
+            dropMessage.TimeStamp = timeStamp;
+            dropMessage.SourceType = lootRecordType.toString();
+            dropMessage.SourceId = String.valueOf(npcComp.getId());
 
             if (dropMessage.GpValue > VALUABLE_DROP_THRESHOLD || dropMessage.CollectionLogCompleted)
             {
