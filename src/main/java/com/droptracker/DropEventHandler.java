@@ -166,6 +166,20 @@ public class DropEventHandler
 
     public void HandleCollectionLogEntry(String itemName)
     {
-        _collectionLogMessages.put(itemName, System.currentTimeMillis());
+        long timeStamp = System.currentTimeMillis();
+        long accountHash = _client.getAccountHash();
+
+        var dropMessage = _messageQueueHandler.FindDropByItemName(accountHash, itemName);
+
+        if (dropMessage != null)
+        {
+            dropMessage.IsImportant = true;
+            dropMessage.CollectionLogCompleted = true;
+
+            _messageQueueHandler.Flush(accountHash);
+            return;
+        }
+
+        _collectionLogMessages.put(itemName, timeStamp);
     }
 }
