@@ -44,35 +44,7 @@ public class DropEventHandler
 
     public void HandleEventDrop(LootReceived lootReceived)
     {
-        String timeStamp = Instant.now().toString();
-
-        var items = lootReceived.getItems();
-        long accountHash = _client.getAccountHash();
-
-        for (ItemStack item : items)
-        {
-            int itemId = item.getId();
-            var itemComp = _itemManager.getItemComposition(itemId);
-
-            var dropMessage = new DropHttpMessage();
-            dropMessage.ItemId = itemId;
-            dropMessage.ItemName = itemComp.getName();
-            dropMessage.Quantity = item.getQuantity();
-            dropMessage.GpValue = _itemManager.getItemPrice(itemId);
-            dropMessage.Source = lootReceived.getName();
-            dropMessage.KillCount = -1;
-            dropMessage.TimeStamp = timeStamp;
-            dropMessage.SourceType = lootReceived.getType().toString();
-
-            if (dropMessage.GpValue > VALUABLE_DROP_THRESHOLD || dropMessage.CollectionLogCompleted)
-            {
-                dropMessage.IsImportant = true;
-            }
-
-            _messageQueueHandler.QueueMessage(dropMessage, accountHash);
-
-            //if IsImportant call flush queue
-        }
+        ProcessLootReceived(lootReceived);
     }
 
     public void HandleNpcDrop(ServerNpcLoot lootReceived)
@@ -144,6 +116,11 @@ public class DropEventHandler
     }
 
     public void HandleUnknownDrop(LootReceived lootReceived)
+    {
+        ProcessLootReceived(lootReceived);
+    }
+
+    private void ProcessLootReceived(LootReceived lootReceived)
     {
         var items = lootReceived.getItems();
         long accountHash = _client.getAccountHash();
