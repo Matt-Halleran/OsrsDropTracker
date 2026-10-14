@@ -1,7 +1,7 @@
 package com.droptracker;
 
-import net.runelite.api.events.VarbitChanged;
 import net.runelite.api.gameval.VarbitID;
+import net.runelite.api.events.VarbitChanged;
 import com.google.inject.Provides;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.ChatMessageType;
@@ -40,10 +40,6 @@ public class DropTrackerPlugin extends Plugin
 
 	private int pickpocketTick = -1;
 	private ScheduledFuture<?> flushTask;
-
-	public DropTrackerPlugin()
-	{
-	}
 
 	@Override
 	protected void startUp() throws Exception

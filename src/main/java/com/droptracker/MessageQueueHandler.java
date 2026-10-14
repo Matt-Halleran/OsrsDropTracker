@@ -62,7 +62,7 @@ public class MessageQueueHandler {
         DropHttpMessage latest = null;
         for (DropHttpMessage msg : queue)
         {
-            if (itemName.equals(msg.ItemName))
+            if (itemName.equals(msg.itemName))
             {
                 latest = msg;
             }
@@ -96,7 +96,7 @@ public class MessageQueueHandler {
 
                 while (dropBatch.size() < MESSAGE_BATCH_SIZE && (msg = messageQueue.poll()) != null)
                 {
-                    dropBatch.put(msg.DropUUID, msg);
+                    dropBatch.put(msg.dropUUID, msg);
                 }
 
                 if (dropBatch.isEmpty()) { return; }

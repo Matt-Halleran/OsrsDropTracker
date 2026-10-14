@@ -6,30 +6,30 @@ public class DropHttpMessage
 {
 
     public DropHttpMessage(){
-        DropUUID = UUID.randomUUID().toString();
+        dropUUID = UUID.randomUUID().toString();
     }
 
-    public final String DropUUID;
+    public final String dropUUID;
 
-    public int ItemId;
+    public int itemId;
 
-    public String ItemName;
+    public String itemName;
 
-    public String TimeStamp;
+    public String timeStamp;
 
-    public String Source;
+    public String source;
 
-    public String SourceId;
+    public String sourceId;
 
-    public String SourceType;
+    public String sourceType;
 
-    public int Quantity = -1;
+    public int quantity = -1;
 
-    public int KillCount = -1;
+    public int killCount = -1;
 
-    public long GpValue = -1;
+    public long gpValue = -1;
 
-    public boolean CollectionLogCompleted = false;
+    public boolean collectionLogCompleted = false;
 
-    public boolean IsImportant = false;
+    public boolean isImportant = false;
 }

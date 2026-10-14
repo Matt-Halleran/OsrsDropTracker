@@ -74,8 +74,8 @@ public class DropEventHandler
 
         if (dropMessage != null)
         {
-            dropMessage.IsImportant = true;
-            dropMessage.CollectionLogCompleted = true;
+            dropMessage.isImportant = true;
+            dropMessage.collectionLogCompleted = true;
 
             messageQueueHandler.flush(accountHash);
             return;
@@ -96,28 +96,28 @@ public class DropEventHandler
             var itemComp = itemManager.getItemComposition(itemId);
 
             var dropMessage = new DropHttpMessage();
-            dropMessage.ItemId = itemId;
-            dropMessage.ItemName = itemComp.getName();
-            dropMessage.Quantity = item.getQuantity();
-            dropMessage.TimeStamp = timeStamp;
-            dropMessage.GpValue = itemManager.getItemPrice(itemId);
-            dropMessage.KillCount = -1;
-            dropMessage.Source = lootReceived.getName();
-            dropMessage.SourceType = lootReceived.getType().toString();
+            dropMessage.itemId = itemId;
+            dropMessage.itemName = itemComp.getName();
+            dropMessage.quantity = item.getQuantity();
+            dropMessage.timeStamp = timeStamp;
+            dropMessage.gpValue = itemManager.getItemPrice(itemId);
+            dropMessage.killCount = -1;
+            dropMessage.source = lootReceived.getName();
+            dropMessage.sourceType = lootReceived.getType().toString();
 
-            if (isRecentCollectionLogEntry(dropMessage.ItemName))
+            if (isRecentCollectionLogEntry(dropMessage.itemName))
             {
-                dropMessage.CollectionLogCompleted = true;
+                dropMessage.collectionLogCompleted = true;
             }
 
-            if (dropMessage.GpValue > VALUABLE_DROP_THRESHOLD || dropMessage.CollectionLogCompleted)
+            if (dropMessage.gpValue > VALUABLE_DROP_THRESHOLD || dropMessage.collectionLogCompleted)
             {
-                dropMessage.IsImportant = true;
+                dropMessage.isImportant = true;
             }
 
             messageQueueHandler.queueMessage(dropMessage, accountHash);
 
-            if (dropMessage.IsImportant)
+            if (dropMessage.isImportant)
             {
                 scheduleImportantFlush();
             }
@@ -139,29 +139,29 @@ public class DropEventHandler
             var itemComp = itemManager.getItemComposition(itemId);
 
             var dropMessage = new DropHttpMessage();
-            dropMessage.ItemId = itemId;
-            dropMessage.ItemName = itemComp.getName();
-            dropMessage.Quantity = item.getQuantity();
-            dropMessage.GpValue = itemManager.getItemPrice(itemId);
-            dropMessage.Source = npcComp.getName();
-            dropMessage.KillCount = -1;
-            dropMessage.TimeStamp = timeStamp;
-            dropMessage.SourceType = lootRecordType.toString();
-            dropMessage.SourceId = String.valueOf(npcComp.getId());
+            dropMessage.itemId = itemId;
+            dropMessage.itemName = itemComp.getName();
+            dropMessage.quantity = item.getQuantity();
+            dropMessage.gpValue = itemManager.getItemPrice(itemId);
+            dropMessage.source = npcComp.getName();
+            dropMessage.killCount = -1;
+            dropMessage.timeStamp = timeStamp;
+            dropMessage.sourceType = lootRecordType.toString();
+            dropMessage.sourceId = String.valueOf(npcComp.getId());
 
-            if (isRecentCollectionLogEntry(dropMessage.ItemName))
+            if (isRecentCollectionLogEntry(dropMessage.itemName))
             {
-                dropMessage.CollectionLogCompleted = true;
+                dropMessage.collectionLogCompleted = true;
             }
 
-            if (dropMessage.GpValue > VALUABLE_DROP_THRESHOLD || dropMessage.CollectionLogCompleted)
+            if (dropMessage.gpValue > VALUABLE_DROP_THRESHOLD || dropMessage.collectionLogCompleted)
             {
-                dropMessage.IsImportant = true;
+                dropMessage.isImportant = true;
             }
 
             messageQueueHandler.queueMessage(dropMessage, accountHash);
 
-            if (dropMessage.IsImportant)
+            if (dropMessage.isImportant)
             {
                 scheduleImportantFlush();
             }
