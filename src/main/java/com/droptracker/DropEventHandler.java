@@ -42,7 +42,7 @@ public class DropEventHandler
 
     public void flush()
     {
-        messageQueueHandler.Flush(client.getAccountHash());
+        messageQueueHandler.flush(client.getAccountHash());
     }
 
     public void handleEventDrop(LootReceived lootReceived)
@@ -70,14 +70,14 @@ public class DropEventHandler
         long timeStamp = System.currentTimeMillis();
         long accountHash = client.getAccountHash();
 
-        var dropMessage = messageQueueHandler.FindDropByItemName(accountHash, itemName);
+        var dropMessage = messageQueueHandler.findDropByItemName(accountHash, itemName);
 
         if (dropMessage != null)
         {
             dropMessage.IsImportant = true;
             dropMessage.CollectionLogCompleted = true;
 
-            messageQueueHandler.Flush(accountHash);
+            messageQueueHandler.flush(accountHash);
             return;
         }
 
@@ -115,7 +115,7 @@ public class DropEventHandler
                 dropMessage.IsImportant = true;
             }
 
-            messageQueueHandler.QueueMessage(dropMessage, accountHash);
+            messageQueueHandler.queueMessage(dropMessage, accountHash);
 
             if (dropMessage.IsImportant)
             {
@@ -159,7 +159,7 @@ public class DropEventHandler
                 dropMessage.IsImportant = true;
             }
 
-            messageQueueHandler.QueueMessage(dropMessage, accountHash);
+            messageQueueHandler.queueMessage(dropMessage, accountHash);
 
             if (dropMessage.IsImportant)
             {

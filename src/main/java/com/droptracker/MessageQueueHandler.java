@@ -24,17 +24,17 @@ public class MessageQueueHandler {
     private final static String API_BASE_URL = "http://localhost:5117/";
     private final static String API_DROP_ENDPOINT = "api/drop";
 
-    private final OkHttpClient _httpClient;
-    private final Gson _gson;
+    private final OkHttpClient httpClient;
+    private final Gson gson;
 
     @Inject
     public MessageQueueHandler(OkHttpClient httpClient, Gson gson)
     {
-        _httpClient = httpClient;
-        _gson = gson;
+        this.httpClient = httpClient;
+        this.gson = gson;
     }
 
-    public void QueueMessage(DropHttpMessage dropMessage, long accountHash)
+    public void queueMessage(DropHttpMessage dropMessage, long accountHash)
     {
         if (accountHash == -1)
         {
@@ -42,7 +42,7 @@ public class MessageQueueHandler {
             return;
         }
 
-        var messageQueue = GetQueueFor(accountHash);
+        var messageQueue = getQueueFor(accountHash);
 
         if (!messageQueue.offer(dropMessage))
         {
@@ -51,7 +51,7 @@ public class MessageQueueHandler {
 
     }
 
-    public DropHttpMessage FindDropByItemName(long accountHash, String itemName)
+    public DropHttpMessage findDropByItemName(long accountHash, String itemName)
     {
         var queue = _queuesByAccount.get(accountHash);
         if (queue == null)
@@ -72,7 +72,7 @@ public class MessageQueueHandler {
         return latest;
     }
 
-    public void Flush(long accountHash)
+    public void flush(long accountHash)
     {
         try
         {
@@ -81,7 +81,7 @@ public class MessageQueueHandler {
                 return;
             }
 
-            var messageQueue = GetQueueFor(accountHash);
+            var messageQueue = getQueueFor(accountHash);
 
             if (messageQueue.isEmpty())
             {
@@ -103,7 +103,7 @@ public class MessageQueueHandler {
 
                 if (dropBatch.isEmpty()) { return; }
 
-                SendDropBatch(dropBatch, accountHash, messageQueue);
+                sendDropBatch(dropBatch, accountHash, messageQueue);
             }
         }
         catch (Exception ex)
@@ -113,18 +113,18 @@ public class MessageQueueHandler {
     }
 
 
-    private LinkedBlockingQueue<DropHttpMessage> GetQueueFor(long accountHash)
+    private LinkedBlockingQueue<DropHttpMessage> getQueueFor(long accountHash)
     {
         return _queuesByAccount.computeIfAbsent(accountHash,
                 h -> new LinkedBlockingQueue<>(QUEUE_SIZE));
     }
 
-    private void SendDropBatch(ConcurrentHashMap<String, DropHttpMessage> dropBatch, long accountHash, LinkedBlockingQueue<DropHttpMessage> messageQueue) {
+    private void sendDropBatch(ConcurrentHashMap<String, DropHttpMessage> dropBatch, long accountHash, LinkedBlockingQueue<DropHttpMessage> messageQueue) {
         var apiRequest = new AddPlayerDropsRequestMessage();
         apiRequest.PlayerHash = accountHash;
         apiRequest.Drops = dropBatch.values();
 
-        String json = _gson.toJson(apiRequest);
+        String json = gson.toJson(apiRequest);
 
         RequestBody body = RequestBody.create(MediaType.get("application/json; charset=utf-8"), json);
         Request request = new Request.Builder()
@@ -132,7 +132,7 @@ public class MessageQueueHandler {
                 .post(body)
                 .build();
 
-        _httpClient.newCall(request).enqueue(new Callback()
+        httpClient.newCall(request).enqueue(new Callback()
         {
             @Override
             public void onFailure(Call call, IOException e)
@@ -165,7 +165,7 @@ public class MessageQueueHandler {
                         return;
                     }
 
-                    var apiResponse = _gson.fromJson(response.body().string(),
+                    var apiResponse = gson.fromJson(response.body().string(),
                             AddPlayerDropsResponseMessage.class);
 
                     if (apiResponse.FailedDropUploads != null)
