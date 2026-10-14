@@ -119,8 +119,8 @@ public class MessageQueueHandler {
 
     private void sendDropBatch(ConcurrentHashMap<String, DropHttpMessage> dropBatch, long accountHash, LinkedBlockingQueue<DropHttpMessage> messageQueue) {
         var apiRequest = new AddPlayerDropsRequestMessage();
-        apiRequest.PlayerHash = accountHash;
-        apiRequest.Drops = dropBatch.values();
+        apiRequest.playerHash = accountHash;
+        apiRequest.drops = dropBatch.values();
 
         String json = gson.toJson(apiRequest);
 
@@ -166,9 +166,9 @@ public class MessageQueueHandler {
                     var apiResponse = gson.fromJson(response.body().string(),
                             AddPlayerDropsResponseMessage.class);
 
-                    if (apiResponse.FailedDropUploads != null)
+                    if (apiResponse.failedDropUploads != null)
                     {
-                        for (String uuid : apiResponse.FailedDropUploads)
+                        for (String uuid : apiResponse.failedDropUploads)
                         {
                             DropHttpMessage msg = dropBatch.remove(uuid);
                             if (msg != null)
