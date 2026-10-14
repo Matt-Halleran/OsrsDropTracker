@@ -16,14 +16,12 @@ import java.util.concurrent.LinkedBlockingQueue;
 @Slf4j
 @Singleton
 public class MessageQueueHandler {
-
-    private final ConcurrentHashMap<Long, LinkedBlockingQueue<DropHttpMessage>> _queuesByAccount = new ConcurrentHashMap<>();
-
     private static final int QUEUE_SIZE = 250;
     private static final int MESSAGE_BATCH_SIZE = 100;
     private static final String API_BASE_URL = "http://localhost:5117/";
     private static final String API_DROP_ENDPOINT = "api/drop";
 
+    private final ConcurrentHashMap<Long, LinkedBlockingQueue<DropHttpMessage>> queuesByAccount = new ConcurrentHashMap<>();
     private final OkHttpClient httpClient;
     private final Gson gson;
 
@@ -53,7 +51,7 @@ public class MessageQueueHandler {
 
     public DropHttpMessage findDropByItemName(long accountHash, String itemName)
     {
-        var queue = _queuesByAccount.get(accountHash);
+        var queue = queuesByAccount.get(accountHash);
         if (queue == null)
         {
             return null;
@@ -115,7 +113,7 @@ public class MessageQueueHandler {
 
     private LinkedBlockingQueue<DropHttpMessage> getQueueFor(long accountHash)
     {
-        return _queuesByAccount.computeIfAbsent(accountHash,
+        return queuesByAccount.computeIfAbsent(accountHash,
                 h -> new LinkedBlockingQueue<>(QUEUE_SIZE));
     }
 

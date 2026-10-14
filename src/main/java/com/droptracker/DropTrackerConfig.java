@@ -14,6 +14,6 @@ public interface DropTrackerConfig extends Config
 	)
 	default String greeting()
 	{
-		return "Hello";
+		return "Welcome to DropTracker";
 	}
 }

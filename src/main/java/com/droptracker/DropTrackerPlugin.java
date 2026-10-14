@@ -2,7 +2,6 @@ package com.droptracker;
 
 import net.runelite.api.events.VarbitChanged;
 import net.runelite.api.gameval.VarbitID;
-import com.google.gson.Gson;
 import com.google.inject.Provides;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.ChatMessageType;
@@ -11,13 +10,11 @@ import net.runelite.api.events.ChatMessage;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ServerNpcLoot;
-import net.runelite.client.game.ItemManager;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.plugins.loottracker.LootReceived;
 import net.runelite.client.util.Text;
 import net.runelite.http.api.loottracker.LootRecordType;
-import okhttp3.OkHttpClient;
 
 import javax.inject.Inject;
 import java.util.concurrent.*;
@@ -29,33 +26,20 @@ import java.util.regex.Pattern;
 )
 public class DropTrackerPlugin extends Plugin
 {
-
 	@Inject
 	private Client client;
 
 	@Inject
-	private DropTrackerConfig config;
+	private DropEventHandler dropEventHandler;
 
 	@Inject
-	private ItemManager itemManager;
-
-	@Inject
-	private OkHttpClient okHttpClient;
-
-	@Inject
-	private Gson _gson;
-
-	@Inject
-	private DropEventHandler _dropEventHandler;
-
-	@Inject
-	private ScheduledExecutorService _flushService;
+	private ScheduledExecutorService flushService;
 
 	private static final Pattern PICKPOCKET_REGEX = Pattern.compile("You pick (the )?(?<target>.+)'s? pocket.*");
 	private static final String COLLECTION_LOG_TEXT = "New item added to your collection log: ";
 
 	private int pickpocketTick = -1;
-
+	private ScheduledFuture<?> flushTask;
 
 	public DropTrackerPlugin()
 	{
@@ -64,12 +48,16 @@ public class DropTrackerPlugin extends Plugin
 	@Override
 	protected void startUp() throws Exception
 	{
-		_flushService.scheduleAtFixedRate(_dropEventHandler::flush, 30, 30, TimeUnit.SECONDS);
+		flushTask = flushService.scheduleAtFixedRate(dropEventHandler::flush, 30, 30, TimeUnit.SECONDS);
 	}
 
 	@Override
 	protected void shutDown() throws Exception
 	{
+		if (flushTask != null)
+		{
+			flushTask.cancel(false);
+		}
 	}
 
 	@Subscribe
@@ -91,7 +79,7 @@ public class DropTrackerPlugin extends Plugin
 		if (message.startsWith(COLLECTION_LOG_TEXT)
 				&& (client.getVarbitValue(VarbitID.OPTION_COLLECTION_NEW_ITEM) & 1) == 1) {
 			String entry = Text.removeTags(message).substring(COLLECTION_LOG_TEXT.length());
-			_dropEventHandler.handleCollectionLogEntry(entry);
+			dropEventHandler.handleCollectionLogEntry(entry);
 		}
 	}
 
@@ -102,11 +90,11 @@ public class DropTrackerPlugin extends Plugin
 
 		if (isPickpocket)
 		{
-			_dropEventHandler.handlePickpocketDrop(serverNpcLoot);
+			dropEventHandler.handlePickpocketDrop(serverNpcLoot);
 			return;
 		}
 
-		_dropEventHandler.handleNpcDrop(serverNpcLoot);
+		dropEventHandler.handleNpcDrop(serverNpcLoot);
 	}
 
 	@Subscribe
@@ -116,11 +104,11 @@ public class DropTrackerPlugin extends Plugin
 
 		switch (lootType){
 			case EVENT:
-				_dropEventHandler.handleEventDrop(lootReceived);
+				dropEventHandler.handleEventDrop(lootReceived);
 			break;
 
 			case UNKNOWN:
-				_dropEventHandler.handleUnknownDrop(lootReceived);
+				dropEventHandler.handleUnknownDrop(lootReceived);
 			break;
 
             default:
