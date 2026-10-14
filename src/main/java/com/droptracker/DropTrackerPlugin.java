@@ -2,6 +2,7 @@ package com.droptracker;
 
 import net.runelite.api.GameState;
 import net.runelite.api.events.GameStateChanged;
+import net.runelite.api.events.GameTick;
 import net.runelite.api.gameval.VarbitID;
 import com.google.gson.Gson;
 import com.google.inject.Provides;
@@ -56,6 +57,7 @@ public class DropTrackerPlugin extends Plugin
 	private static final String COLLECTION_LOG_TEXT = "New item added to your collection log: ";
 
 	private int pickpocketTick = -1;
+	private int loginTick = -1;
 
 
 	public DropTrackerPlugin()
@@ -66,8 +68,6 @@ public class DropTrackerPlugin extends Plugin
 	protected void startUp() throws Exception
 	{
 		_flushService.scheduleAtFixedRate(_dropEventHandler::Flush, 30, 30, TimeUnit.SECONDS);
-
-
 	}
 
 	@Override
@@ -132,11 +132,19 @@ public class DropTrackerPlugin extends Plugin
 	}
 
 	@Subscribe
-	public void onGameStateChanged(GameStateChanged gameStateChanged)
-	{
-		if (gameStateChanged.getGameState() == GameState.LOGGED_IN
-				&& (client.getVarbitValue(VarbitID.OPTION_COLLECTION_NEW_ITEM) & 1) == 0)
-		{
+	public void onGameStateChanged(GameStateChanged e) {
+		if (e.getGameState() == GameState.LOGGED_IN) {
+			loginTick = client.getTickCount();
+		}
+	}
+
+	@Subscribe
+	public void onGameTick(GameTick t) {
+		if (loginTick == -1 || client.getTickCount() < loginTick + 8) return;
+
+		loginTick = -1; // run once
+		
+		if ((client.getVarbitValue(VarbitID.OPTION_COLLECTION_NEW_ITEM) & 1) == 0) {
 			client.addChatMessage(ChatMessageType.GAMEMESSAGE, "",
 					"Drop Tracker: your collection log chat notification is off. Enable it in Settings > Chat so collection log drops get detected.",
 					null);
