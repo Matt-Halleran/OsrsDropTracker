@@ -7,7 +7,6 @@ import net.runelite.client.game.ItemManager;
 import net.runelite.client.game.ItemStack;
 import net.runelite.client.plugins.loottracker.LootReceived;
 import net.runelite.http.api.loottracker.LootRecordType;
-import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -18,18 +17,17 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-@Slf4j
 @Singleton
 public class DropEventHandler
 {
     private final ItemManager itemManager;
     private final Client client;
     private final MessageQueueHandler messageQueueHandler;
-    private final Map<String, Long> collectionLogMessages = new ConcurrentHashMap<String, Long>();
+    private final Map<String, Long> collectionLogMessages = new ConcurrentHashMap<>();
     private final ScheduledExecutorService flushService;
     private final AtomicBoolean importantFlushScheduled = new AtomicBoolean(false);
 
-    private final static int VALUABLE_DROP_THRESHOLD = 1000000;
+    private static final int VALUABLE_DROP_THRESHOLD = 1000000;
     private static final long COLLECTION_LOG_LOOKBACK_MS = 10_000;
 
 
