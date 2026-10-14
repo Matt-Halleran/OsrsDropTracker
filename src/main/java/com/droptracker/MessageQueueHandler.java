@@ -19,10 +19,10 @@ public class MessageQueueHandler {
 
     private final ConcurrentHashMap<Long, LinkedBlockingQueue<DropHttpMessage>> _queuesByAccount = new ConcurrentHashMap<>();
 
-    private final static int QUEUE_SIZE = 250;
-    private final static int MESSAGE_BATCH_SIZE = 100;
-    private final static String API_BASE_URL = "http://localhost:5117/";
-    private final static String API_DROP_ENDPOINT = "api/drop";
+    private static final int QUEUE_SIZE = 250;
+    private static final int MESSAGE_BATCH_SIZE = 100;
+    private static final String API_BASE_URL = "http://localhost:5117/";
+    private static final String API_DROP_ENDPOINT = "api/drop";
 
     private final OkHttpClient httpClient;
     private final Gson gson;
