@@ -64,7 +64,7 @@ public class DropTrackerPlugin extends Plugin
 	@Override
 	protected void startUp() throws Exception
 	{
-		_flushService.scheduleAtFixedRate(_dropEventHandler::Flush, 30, 30, TimeUnit.SECONDS);
+		_flushService.scheduleAtFixedRate(_dropEventHandler::flush, 30, 30, TimeUnit.SECONDS);
 	}
 
 	@Override
@@ -91,7 +91,7 @@ public class DropTrackerPlugin extends Plugin
 		if (message.startsWith(COLLECTION_LOG_TEXT)
 				&& (client.getVarbitValue(VarbitID.OPTION_COLLECTION_NEW_ITEM) & 1) == 1) {
 			String entry = Text.removeTags(message).substring(COLLECTION_LOG_TEXT.length());
-			_dropEventHandler.HandleCollectionLogEntry(entry);
+			_dropEventHandler.handleCollectionLogEntry(entry);
 		}
 	}
 
@@ -102,11 +102,11 @@ public class DropTrackerPlugin extends Plugin
 
 		if (isPickpocket)
 		{
-			_dropEventHandler.HandlePickpocketDrop(serverNpcLoot);
+			_dropEventHandler.handlePickpocketDrop(serverNpcLoot);
 			return;
 		}
 
-		_dropEventHandler.HandleNpcDrop(serverNpcLoot);
+		_dropEventHandler.handleNpcDrop(serverNpcLoot);
 	}
 
 	@Subscribe
@@ -116,11 +116,11 @@ public class DropTrackerPlugin extends Plugin
 
 		switch (lootType){
 			case EVENT:
-				_dropEventHandler.HandleEventDrop(lootReceived);
+				_dropEventHandler.handleEventDrop(lootReceived);
 			break;
 
 			case UNKNOWN:
-				_dropEventHandler.HandleUnknownDrop(lootReceived);
+				_dropEventHandler.handleUnknownDrop(lootReceived);
 			break;
 
             default:
