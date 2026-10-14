@@ -92,7 +92,7 @@ public class DropTrackerPlugin extends Plugin
 		}
 
 		if (message.startsWith(COLLECTION_LOG_TEXT)
-				&& client.getVarbitValue(VarbitID.OPTION_COLLECTION_NEW_ITEM) == 1) {
+				&& (client.getVarbitValue(VarbitID.OPTION_COLLECTION_NEW_ITEM) & 1) == 1) {
 			String entry = Text.removeTags(message).substring(COLLECTION_LOG_TEXT.length());
 			_dropEventHandler.HandleCollectionLogEntry(entry);
 		}
@@ -135,7 +135,7 @@ public class DropTrackerPlugin extends Plugin
 	public void onGameStateChanged(GameStateChanged gameStateChanged)
 	{
 		if (gameStateChanged.getGameState() == GameState.LOGGED_IN
-				&& client.getVarbitValue(VarbitID.OPTION_COLLECTION_NEW_ITEM) != 1)
+				&& (client.getVarbitValue(VarbitID.OPTION_COLLECTION_NEW_ITEM) & 1) == 0)
 		{
 			client.addChatMessage(ChatMessageType.GAMEMESSAGE, "",
 					"Drop Tracker: your collection log chat notification is off. Enable it in Settings > Chat so collection log drops get detected.",
